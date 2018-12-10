@@ -1,13 +1,13 @@
 {
-  "main.css": "/honor-maze/static/css/main.526ae11f.chunk.css",
-  "main.js": "/honor-maze/static/js/main.ffa9f4d3.chunk.js",
-  "main.js.map": "/honor-maze/static/js/main.ffa9f4d3.chunk.js.map",
-  "static/js/1.94740ede.chunk.js": "/honor-maze/static/js/1.94740ede.chunk.js",
-  "static/js/1.94740ede.chunk.js.map": "/honor-maze/static/js/1.94740ede.chunk.js.map",
+  "main.css": "/honor-maze/static/css/main.23a75c4a.chunk.css",
+  "main.js": "/honor-maze/static/js/main.5d388a27.chunk.js",
+  "main.js.map": "/honor-maze/static/js/main.5d388a27.chunk.js.map",
+  "static/js/1.8bd972a8.chunk.js": "/honor-maze/static/js/1.8bd972a8.chunk.js",
+  "static/js/1.8bd972a8.chunk.js.map": "/honor-maze/static/js/1.8bd972a8.chunk.js.map",
   "runtime~main.js": "/honor-maze/static/js/runtime~main.733489fb.js",
   "runtime~main.js.map": "/honor-maze/static/js/runtime~main.733489fb.js.map",
-  "static/css/main.526ae11f.chunk.css.map": "/honor-maze/static/css/main.526ae11f.chunk.css.map",
+  "static/css/main.23a75c4a.chunk.css.map": "/honor-maze/static/css/main.23a75c4a.chunk.css.map",
   "index.html": "/honor-maze/index.html",
-  "precache-manifest.bedf14cee0f276afb240ced055edb662.js": "/honor-maze/precache-manifest.bedf14cee0f276afb240ced055edb662.js",
+  "precache-manifest.56cd4caa33285abdb008b8dcb6f13101.js": "/honor-maze/precache-manifest.56cd4caa33285abdb008b8dcb6f13101.js",
   "service-worker.js": "/honor-maze/service-worker.js"
 }
