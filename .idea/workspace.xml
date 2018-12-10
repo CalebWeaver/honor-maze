@@ -2,11 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2d04c338-6c8c-4fda-930d-50b087585aca" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/instructions-component.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game-component/game-component.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/game-component/game-component.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rooms.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/rooms.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/room-card-component/room-card-component.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/room-card-component/room-card-component.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,8 +20,8 @@
       <file leaf-file-name="game-component.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/game-component/game-component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="384" column="30" lean-forward="true" selection-start-line="384" selection-start-column="30" selection-end-line="384" selection-end-column="30" />
+            <state relative-caret-position="175">
+              <caret line="143" column="41" selection-start-line="143" selection-start-column="41" selection-end-line="143" selection-end-column="41" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -33,10 +32,22 @@
       <file leaf-file-name="room-card-component.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/room-card-component/room-card-component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="425">
-              <caret line="24" column="7" selection-start-line="24" selection-start-column="7" selection-end-line="24" selection-end-column="7" />
+            <state relative-caret-position="221">
+              <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="App.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/App.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="102">
+              <caret line="6" column="29" selection-start-line="6" selection-start-column="29" selection-end-line="6" selection-end-column="29" />
+              <folding>
+                <element signature="e#0#39#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -96,8 +107,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>show</find>
-      <find>addcomponent</find>
       <find>pickup</find>
       <find>addcompo</find>
       <find>debugger</find>
@@ -126,6 +135,8 @@
       <find>note</find>
       <find>move</find>
       <find>move(</find>
+      <find>historyentr</find>
+      <find>consol</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -143,15 +154,15 @@
         <option value="$PROJECT_DIR$/src/history-row-component/history-row-component.js" />
         <option value="$PROJECT_DIR$/src/room-card-component/history-row-component.js" />
         <option value="$PROJECT_DIR$/src/utils/utils.js" />
-        <option value="$PROJECT_DIR$/src/App.js" />
         <option value="$PROJECT_DIR$/src/room-card-component/room-card-component.css" />
-        <option value="$PROJECT_DIR$/src/room-card-component/room-card-component.js" />
         <option value="$PROJECT_DIR$/src/utils/controls-service.js" />
         <option value="$PROJECT_DIR$/src/inventory-component/inventory-component.js" />
         <option value="$PROJECT_DIR$/package.json" />
         <option value="$PROJECT_DIR$/public/index.html" />
         <option value="$PROJECT_DIR$/src/rooms.js" />
         <option value="$PROJECT_DIR$/src/instructions-component.js" />
+        <option value="$PROJECT_DIR$/src/room-card-component/room-card-component.js" />
+        <option value="$PROJECT_DIR$/src/App.js" />
         <option value="$PROJECT_DIR$/src/game-component/game-component.js" />
       </list>
     </option>
@@ -247,7 +258,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="JavaScriptWeakerCompletionTypeGuess" value="true" />
-    <property name="SearchEverywhereHistoryKey" value="instru&#9;FILE&#9;file://C:/IJDev/honor-maze/src/instructions-component.js&#10;inventor&#9;FILE&#9;file://C:/IJDev/honor-maze/src/inventory-component/inventory-component.js" />
+    <property name="SearchEverywhereHistoryKey" value="app&#9;FILE&#9;file://C:/IJDev/honor-maze/src/App.js&#10;instru&#9;FILE&#9;file://C:/IJDev/honor-maze/src/instructions-component.js&#10;inventor&#9;FILE&#9;file://C:/IJDev/honor-maze/src/inventory-component/inventory-component.js" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="last_opened_file_path" value="$USER_HOME$/AppData/Roaming/npm/node_modules/@angular/cli" />
@@ -333,12 +344,20 @@
       <workItem from="1543984345859" duration="2344000" />
       <workItem from="1544109122187" duration="104000" />
       <workItem from="1544125039184" duration="13400000" />
-      <workItem from="1544217750944" duration="43315000" />
+      <workItem from="1544217750944" duration="43803000" />
     </task>
+    <task id="LOCAL-00001" summary="Finished blue section, added instructions and a note. Also refactored set state race conditions">
+      <created>1544463569961</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1544463569961</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="93258000" />
+    <option name="totallyTimeSpent" value="93746000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
@@ -417,6 +436,10 @@
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Finished blue section, added instructions and a note. Also refactored set state race conditions" />
+    <option name="LAST_COMMIT_MESSAGE" value="Finished blue section, added instructions and a note. Also refactored set state race conditions" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/src/inventory-component/inventory-component.js">
@@ -727,13 +750,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/App.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="21" selection-start-line="10" selection-start-column="21" selection-end-line="10" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/navigator-service/navigator-service.js">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -755,16 +771,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="442">
           <caret line="26" column="4" lean-forward="true" selection-start-line="26" selection-start-column="4" selection-end-line="26" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/room-card-component/room-card-component.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="24" column="7" selection-start-line="24" selection-start-column="7" selection-end-line="24" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -802,10 +808,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/room-card-component/room-card-component.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="221">
+          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/App.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="102">
+          <caret line="6" column="29" selection-start-line="6" selection-start-column="29" selection-end-line="6" selection-end-column="29" />
+          <folding>
+            <element signature="e#0#39#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/game-component/game-component.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="384" column="30" lean-forward="true" selection-start-line="384" selection-start-column="30" selection-end-line="384" selection-end-column="30" />
+        <state relative-caret-position="175">
+          <caret line="143" column="41" selection-start-line="143" selection-start-column="41" selection-end-line="143" selection-end-column="41" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>

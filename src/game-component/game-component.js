@@ -63,7 +63,7 @@ export default class Game extends React.Component {
 
 	render() {
 		let history = [];
-		this.state.roomHistory.map((h) => {
+		this.state.roomHistory.forEach((h) => {
 			history.push(<RoomCard room={h} key={h.moveCount} />);
 		});
 
@@ -141,7 +141,7 @@ export default class Game extends React.Component {
 		} else {
 			this.addHistory('You don\'t have one of those.');
 		}
-		this.state.showExamineInput = false;
+		this.setState({showExamineInput: false});
 	}
 
 	showUseInput() {
@@ -177,7 +177,7 @@ export default class Game extends React.Component {
 		} else {
 			this.addHistory('You don\'t have '+userPrimaryItemInput);
 		}
-		this.state.showUseInput = false;
+		this.setState({showUseInput: false});
 	}
 
 	useItems(primaryItem, secondaryItem) {
@@ -350,7 +350,7 @@ export default class Game extends React.Component {
 	addRoomHistory(description) {
 		this.setState(currentState => {
 			currentState.moveCount = currentState.moveCount + 1;
-			currentState.roomHistory = currentState.roomHistory.insert(0, this.getRoomHistoryEntry(description), currentState.moveCount);
+			currentState.roomHistory = currentState.roomHistory.insert(0, this.getRoomHistoryEntry(description, currentState.moveCount));
 			return currentState;
 		});
 	}

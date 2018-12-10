@@ -20,7 +20,7 @@ function RoomCard(props) {
 	const { classes } = props;
 
 	let roomHistory = [];
-	props.room.history.map((history) => {
+	props.room.history.forEach((history) => {
 		roomHistory.push(<Typography variant="h6" component="p" className="history-row" key={history.moveCount}>{history.desc}</Typography>);
 	});
 
