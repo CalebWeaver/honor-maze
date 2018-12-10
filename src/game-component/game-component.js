@@ -33,6 +33,7 @@ export default class Game extends React.Component {
 	componentDidMount() {
 		document.addEventListener("keydown", this.handleKeydown.bind(this));
 		this.move('tricolorCenter');
+		document.title = 'Honor Maze';
 		// let trap = items['animal trap'];
 		// trap.items.push('');
 		// trap.items.push('');
