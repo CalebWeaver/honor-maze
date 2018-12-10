@@ -64,16 +64,43 @@ rooms.treasure = new Room(
 	}
 );
 
+rooms.exit = new Room(
+	'As you walk down the long hall you eventually see sunlight and the fresh air of freedom. You feel reinvigorated and alive as you never have before. By giving honor to others, you have freed yourself. Congratulations.'
+);
+
 rooms.tricolorCenter = new Room(
-	'You find yourself in a room of three colors which come to distinct borders. You have a vague sense of direction and are able to find your bearings. To your east is yellow, at the center of which is a wooden door. To the south, blue, in which is a stone door. Finally, to the west is red where there is a metal door. The north end of the room holds no color. It is white with a barred door. Through it is darkness and you soon see a large beast come attacking at the door, trying to chew through it, seeming desperate to break the bars, though they hold fast. On the door is a lock which has space for a three sided key.',
+	'You find yourself in a room of three colors which come to distinct borders. You have a vague sense of direction and are able to find your bearings. To your east is yellow, at the center of which is a wooden door. To the south, blue, in which is a stone door. Finally, to the west is red where there is a metal door. The north end of the room holds no color.',
 	{
 		n: {
-			name: '',
+			name: 'exit',
 			state: 'locked',
 		},
 		s: 'blueFoyer',
 		e: 'yellowFoyer',
 		w: 'redFoyer',
+	},
+	{
+		p: {
+			title: 'note',
+			state: 'uncleared',
+			uncleared: 'You notice a note laying in the corner.',
+			desc: 'You pick up the note',
+			item: 'note'
+		},
+		i: {
+			state: 'uncleared',
+			uncleared: 'It is white with a barred door. Through it is darkness and you soon see a large beast come attacking at the door, trying to chew through it, seeming desperate to break the bars, though they hold fast. On the door is a lock which has space for a three sided key.',
+			cleared: 'The door is now open and the creature sits docile, excited for his master to be free.',
+			evt: game => game.showItemInput()
+		},
+		'tricolor key': {
+			evt: function(game) {
+				this.events.i.state = 'cleared';
+				this.exits.n.state = 'unlocked';
+				game.removeItem('tricolor key');
+				game.addHistory('As you approach the door, the beast attacks the bars even more, though never close to where you move. The key fits clean in the lock. You twist and hear the lock \'click\' and the door swings open. The beast gives a howl of joy and runs to your side, master and companion reunited. To the north, the door is open.');
+			}
+		}
 	}
 );
 
@@ -200,21 +227,173 @@ rooms.blueFoyer = new Room(
 	}
 );
 
-rooms.kitchen = new Room();
+rooms.kitchen = new Room(
+	'You follow the scent of cooking food and come into a kitchen. You think your favorite meal might be cooking, but can\'t seem to find where the smell is coming from. To the west you see the blue wall and stone door through which you came. To the south is a glass french door, leading to the back yard.',
+	{
+		w: 'blueFoyer',
+		s: 'backyard'
+	}
+);
 
-rooms.laundry = new Room();
+rooms.laundry = new Room(
+	'You come into a room with a washer, dryer and a rack for hanging. There are some clothes piled in the corner and strewn about on the floor. There is also a large sink on the north wall. To the east you can see a bit of the blue wall, indicating the direction from which you came. To the south, you see some couches and hear laughter.',
+	{
+		e: 'blueFoyer',
+		s: 'living'
+	},
+	{
+		i: {
+			state: 'uncleared',
+			evt: game => game.showItemInput()
+		},
+		'dirty metal bar': {
+			evt: function(game) {
+				this.events.i.state = 'cleared';
+				game.removeItem('dirty metal bar');
+				game.addItem(items.lever);
+				game.addHistory('You run the filthy metal bar under some warm water and apply generous portions of soap to it. After some time and much elbow grease, you clean the long bar and find it to look something like a lever.');
+			}
+		}
+	}
+);
 
-rooms.living = new Room();
+rooms.living = new Room(
+	'You walk towards the sounds of laughter though you don\'t see anyone around. There are two large and fluffy couches on the south and west walls, but you find yourself in too much need to complete your quest to take a break. To the north you notice a shirt laying next to a door way. To the east you see a large and expansive room.',
+	{
+		n: 'laundry',
+		e: 'elephant'
+	}
+);
 
-rooms.elephant = new Room();
+rooms.elephant = new Room(
+	'As you enter the wide and expanding room, you first don\'t notice anything out of the ordinary until you look up. To the north you clearly see the stone door through which you entered. To the west you hear laughter. To the east there is a glass door leading outside.',
+	{
+		n: 'blueFoyer',
+		w: 'living',
+		e: 'backyard'
+	},
+	{
+		i: {
+			state: 'uncleared',
+			uncleared: 'High above you see a pedestal on which an elephant is sitting looking longingly at the higher platform. Far on the other side of the room is another pedestal, even taller. You think you might see a smaller pedestal in the center of the second, taller one and can see the faintest glint of blue from it. On the southern wall there appears a mechanism of some sort, though there is a circular hole in the center of what might be a switch.',
+			cleared: 'The elephant sits on the taller pedestal, it seeming to be his natural fit. He looks at you and you think you can read thanks in his eyes.',
+			evt: game => game.showItemInput()
+		},
+		lever: {
+			evt: function(game) {
+				this.events.i.state = 'cleared';
+				game.removeItem('lever');
+				game.addItem(items['blue key']);
+				game.addHistory('You insert the lever into the mechanism and pull it. The walls begin to make a whirring noise, and from them sprouts a platform, from the pedestal on which the elephant sits, to the one higher. The elephant follows the walkway to the top and with his trunk, he drops the glimmering blue key, which you quickly take.');
+			}
+		}
+	}
+);
 
-rooms.backyard = new Room();
+rooms.backyard = new Room(
+	'You come outside to find a large backyard with a swing set and a sandbox, though neither look like they\'ve been used in some time. To the north you see glass french doors leading into a kitchen. To the west you see a glass door leading into a wide expanse of a room. To the south, past the swing set and play ground you see a large mud patch. It\'s gross',
+	{
+		n: 'kitchen',
+		s: 'mud0',
+		w: 'elephant'
+	}
+);
 
-rooms.mud1 = new Room();
+rooms.mud0 = new Room(
+	'You step into the mud, and it comes up to your knees and seems to get even deeper. You don\'t enjoy it. To the north, you see the playground and back of the house. To the south there is more mud.',
+	{
+		n: 'backyard',
+		s: 'mud2',
+	}
+);
 
-rooms.mud2 = new Room();
+rooms.mud1 = new Room(
+	'The mud is nearly to your waist. The smell is not just just of earth but also grime. To the north it seems to get more shallow. To the west, there is a fence. To the south and east, there is more mud.',
+	{
+		n: 'mud0',
+		s: 'mud4',
+		e: 'mud2'
+	}
+);
 
-rooms.mud3 = new Room();
+rooms.mud2 = new Room(
+	'The mud is nearly to your waist, now. To the north it seems to get more shallow. To the south, east, and west, there is more mud.',
+	{
+		n: 'mud0',
+		s: 'mud5',
+		e: 'mud3',
+		w: 'mud1'
+	}
+);
+
+rooms.mud3 = new Room(
+	'The mud is nearly to your waist. You think you feel something under the surface. Hopefully it\'s just your imagination. To the north it seems to get more shallow. To the east, there is a fence. To the south and west, there is more mud.',
+	{
+		n: 'mud0',
+		s: 'mud6',
+		w: 'mud2'
+	}
+);
+
+rooms.mud4 = new Room(
+	'The mud is to your waist. The smell is getting worse. To the north it seems to get more shallow. To the west, there is a fence. To the south and east, there is more mud.',
+	{
+		n: 'mud1',
+		s: 'mud7',
+		e: 'mud5'
+	}
+);
+
+rooms.mud5 = new Room(
+	'The mud is to your waist. You regret coming out here. To the north it seems to get more shallow. To the south, west, and east, there is more mud.',
+	{
+		n: 'mud2',
+		s: 'mud8',
+		e: 'mud6',
+		w: 'mud4'
+	}
+);
+
+rooms.mud6 = new Room(
+	'The mud is to your waist. You notice a disturbance in the surface of the mud. To the north it seems to get more shallow. To the east, there is a fence. To the south and west, there is more mud.',
+	{
+		n: 'mud3',
+		s: 'mud9',
+		w: 'mud5'
+	},
+	{
+		p: {
+			title: 'dirty metal bar',
+			state: 'uncleared',
+			desc: 'You search around in the mud and grime and find something solid in the mass of goo.',
+			item: 'dirty metal bar'
+		}
+	});
+
+rooms.mud7 = new Room(
+	'The mud is above your waist. The smell awful. You don\'t think you can go any further in, though the mud continue on to the horizon. To the north it seems to get more shallow. To the west, there is a fence. To the south and east, there is more mud.',
+	{
+		n: 'mud4',
+		e: 'mud8'
+	}
+);
+
+rooms.mud8 = new Room(
+	'The mud is above your waist. You feel exhaustion overtaking you. You don\'t think you can go any further in, though the mud continue on to the horizon. To the north it seems to get more shallow. To the west, south, and east, there is more mud.',
+	{
+		n: 'mud5',
+		e: 'mud9',
+		w: 'mud7'
+	}
+);
+
+rooms.mud9 = new Room(
+	'The mud is above your waist. You feel something nibble at your ankle. You don\'t think you can go any further in, though the mud continue on to the horizon. To the north it seems to get more shallow. To the east, there is a fence. To the south and west, there is more mud.',
+	{
+		n: 'mud6',
+		w: 'mud8'
+	}
+);
 
 rooms.redFoyer = new Room(
 	'You come into a room where the red coalesces into the outdoors. You are surrounded by rolling hills, vast greenery and various animals scurrying about from the trees and bushes. To the north the grass and brush are giving way to more rocky terrain. To the south, the rolling hills around you level out into a vast prairie. To the west, the animals seem to be less frequent. To the east, you see a metal door, incongruous with your surroundings.',
@@ -418,7 +597,8 @@ items.rabbit = new Item(
 );
 items['red key'] = new Item(
 	'Red Key',
-	'A crystalline red key, in the form of an old skeleton key. It matches the color of the room in which you began perfectly.'
+	'A crystalline red key, in the form of an old skeleton key. It matches the color of the room in which you began perfectly.',
+	'tricolor key'
 );
 
 //Yellow
@@ -440,7 +620,8 @@ items['carving knife'] = new Item(
 );
 items['yellow key'] = new Item(
 	'Yellow Key',
-	'A bright and glistening yellow key. Seems made of the same stuff as the room in which you began.'
+	'A bright and glistening yellow key. Seems made of the same stuff as the room in which you began.',
+	'tricolor key'
 );
 
 //Blue
@@ -454,5 +635,17 @@ items['lever'] = new Item(
 );
 items['blue key'] = new Item(
 	'Blue Key',
-	'A royal blue key, shining and crystalline as the room from which you entered.'
+	'A royal blue key, shining and crystalline as the room from which you entered.',
+	'tricolor key'
+);
+
+//Tricolor
+items['tricolor key'] = new Item(
+	'Tricolor Key',
+	'A three sided key, of three distinct colors. The red, blue and yellow of the room in which you began.'
+);
+items['tricolor key'].required = ['red key', 'yellow key', 'blue key'];
+items['note'] = new Item(
+	'Note',
+	"The note reads: 'I don't know how I got here but that creature terrifies me. Exhausted... I feel, so tired. No matter what door I go through, I can't seem to find peace. A quest keeps nagging at me. I've noticed some keys laying around but the animals, they guard them jealously. I worry they'll set that beast free if they ever meet up. Maybe one of these times, I'll remember what I've already tried.' You recognize the handwriting to be your own."
 );

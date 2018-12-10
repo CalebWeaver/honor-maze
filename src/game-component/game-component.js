@@ -1,13 +1,12 @@
 import React from 'react';
 import ControlsService from '../utils/controls-service';
 import {List, Map} from 'immutable';
-import NavigatorService from "../navigator-service/navigator-service";
-import {rooms, items} from '../rooms';
+import {items, rooms} from '../rooms';
 import './game-component.css';
 import * as _ from 'lodash';
 import Inventory from "../inventory-component/inventory-component";
 import RoomCard from "../room-card-component/room-card-component";
-import styled from "styled-components";
+import Instructions from "../instructions-component";
 
 export default class Game extends React.Component {
 
@@ -15,21 +14,17 @@ export default class Game extends React.Component {
 		super(props);
 		this.state = {
 			moveCount: 0,
-			location: 'tricolorCenter',
+			location: '',
 			inventory: new Map(),
 			roomHistory: new List(),
 			userItemInput: '',
 			showItemInput: false,
-			userExamineInput: 'rabbit trap',
+			userExamineInput: '',
 			showExamineInput: false,
 			userPrimaryUseInput: '',
 			showUseInput: false,
 			userSecondaryUseInput: '',
 		};
-
-		this.state.roomHistory = this.state.roomHistory.push(this.getRoomHistoryEntry(rooms[this.state.location].desc));
-		this.state.moveCount++;
-		this.navigator = new NavigatorService();
 		this.itemInputRef = React.createRef();
 		this.examineInputRef = React.createRef();
 		this.useInputRef = React.createRef();
@@ -37,12 +32,25 @@ export default class Game extends React.Component {
 
 	componentDidMount() {
 		document.addEventListener("keydown", this.handleKeydown.bind(this));
+		this.move('tricolorCenter');
 		// let trap = items['animal trap'];
 		// trap.items.push('');
 		// trap.items.push('');
 		// trap.items.push('');
 		// trap.items.push('');
 		// this.addItem(trap);
+		// this.addItem(items['dirty metal bar']);
+		// this.addItem(items['carrots']);
+		// this.addItem(items['sticks']);
+		// this.addItem(items['crate']);
+		// let key = items['tricolor key'];
+		// key.items.push('');
+		// key.items.push('');
+		// key.items.push('');
+		// this.addItem(key);
+		// this.addItem(items['red key']);
+		// this.addItem(items['yellow key']);
+		// this.addItem(items['blue key']);
 	}
 
 	componentWillUnmount() {
@@ -100,7 +108,12 @@ export default class Game extends React.Component {
 					}
 				{history}
 				</div>
-				<Inventory items={this.state.inventory} />
+				<div style={{position: 'sticky', height: '100%', top: '0'}}>
+					<div style={{display:'flexbox', flexDirection:'column', justifyContent:'space-between'}}>
+						<Inventory items={this.state.inventory} />
+						<Instructions/>
+					</div>
+				</div>
 			</div>
 		);
 	}
@@ -188,7 +201,7 @@ export default class Game extends React.Component {
 					this.addHistory('Try using each of those with the '+primaryItem.use);
 				}
 			} else if (primaryItem.use === secondaryItemKey) {
-				let masterItem = this.inventory.get(secondaryItemKey);
+				let masterItem = this.state.inventory.get(secondaryItemKey);
 				this.addComponentToItem(primaryItemKey, masterItem);
 				this.removeItem(primaryItemKey);
 			}
@@ -201,7 +214,7 @@ export default class Game extends React.Component {
 	}
 
 	isInputOpen() {
-		return this.state.showItemInput || this.state.showExamineInput || this.state.showPrimaryUseInput;
+		return this.state.showItemInput || this.state.showExamineInput || this.state.showUseInput;
 	}
 
 	getItem(itemName) {
@@ -335,37 +348,42 @@ export default class Game extends React.Component {
 	}
 
 	addRoomHistory(description) {
-		this.setState({
-			moveCount: this.state.moveCount + 1,
-			roomHistory: this.state.roomHistory.insert(0, this.getRoomHistoryEntry(description))
+		this.setState(currentState => {
+			currentState.moveCount = currentState.moveCount + 1;
+			currentState.roomHistory = currentState.roomHistory.insert(0, this.getRoomHistoryEntry(description), currentState.moveCount);
+			return currentState;
 		});
 	}
 
 	addHistory(description) {
 		if (description) {
-			let historyEntry = this.getHistoryEntry(description);
-			let roomHistory = this.state.roomHistory.get(0);
-			let updatedRoomHistory = Object.assign({}, roomHistory, {
-				history: roomHistory.history.insert(0, historyEntry)
-			});
-			this.setState({
-				moveCount: this.state.moveCount + 1,
-				roomHistory: this.state.roomHistory.set(0, updatedRoomHistory)
+			this.setState(currentState => {
+
+				let historyEntry = this.getHistoryEntry(description, currentState.moveCount);
+
+				let roomHistory = currentState.roomHistory.get(0);
+				let updatedRoomHistory = Object.assign({}, roomHistory, {
+					history: roomHistory.history.insert(0, historyEntry)
+				});
+
+				currentState.moveCount = currentState.moveCount + 1;
+				currentState.roomHistory = currentState.roomHistory.set(0, updatedRoomHistory);
+				return currentState;
 			});
 		}
 	}
 
-	getRoomHistoryEntry(description) {
+	getRoomHistoryEntry(description, moveCount) {
 		return {
-			moveCount: this.state.moveCount,
-			history: description ? new List([this.getHistoryEntry(description)]) : new List()
+			moveCount: moveCount,
+			history: description ? new List([this.getHistoryEntry(description, moveCount)]) : new List()
 		};
 	}
 
-	getHistoryEntry(description) {
+	getHistoryEntry(description, moveCount) {
 		return {
 			desc: description,
-			moveCount: this.state.moveCount
+			moveCount: moveCount
 		};
 	}
 
