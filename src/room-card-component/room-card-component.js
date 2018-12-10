@@ -7,7 +7,7 @@ import { withStyles } from "@material-ui/styles";
 
 const styles = {
 	cardContainer: {
-		margin: '1em',
+		margin: '1rem',
 	},
 	historyContent: {
 		'&:last-child': {
