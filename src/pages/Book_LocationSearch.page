@@ -1,0 +1,1804 @@
+<apex:page title="Location Search" showHeader="false" standardStylesheets="false" sidebar="false" docType="html-5.0" controller="Book_CreateController" extensions="GoogleAPIExtension,Book_LocationPropertySearchExtension,Book_PaymentDetailsController,Property_SearchExtension" action="{!clearRoomsBookingInfo}">
+	<apex:includeScript value="/support/console/39.0/integration.js"/>
+	<c:appdynamics pageName="Book Location Search"/>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?libraries=places&key={!GoogleApiKey}"></script>
+	<script src="{!URLFOR($Resource.autocomplete_js)}"></script>
+	<script src="{!URLFOR($Resource.propertyMap_js)}"></script>
+	<apex:stylesheet value="{!URLFOR($Resource.hlt_assets, 'css/hilton-icj.css')}"/>
+	<script>
+		var assetsLoc = '{!$Asset.SLDS}';
+	</script>
+	<script src="{!URLFOR($Resource.hlt_assets, 'js/app.js')}"></script>
+	<script src="{!URLFOR($Resource.initdatepickerjs)}"></script>
+	<script src="{!URLFOR($Resource.ICJUtility)}"></script>
+	<script src="{!URLFOR($Resource.Property_Search)}"></script>
+	<link rel="stylesheet" href="{!URLFOR($Resource.ICJ_AccessibilityAssets, 'css/Accessibility.css')}" type="text/css"/>
+
+	<apex:slds />
+		<style>
+
+		.slds-scope .slds-datepicker td>.slds-day {
+			line-height:18px !important;
+			height:18px;
+		}
+
+		html {
+			background-color:#fafbfc!important;
+		}
+
+		.slds-scope .date-picker-wrapper .month-wrapper table, .slds-scope .date-picker-wrapper .month-wrapper table.month2{
+			table-layout: fixed;
+		}
+
+		#propertyMap {
+			width: 100%;
+		}
+		
+		.requiredAsterisk {
+			color: #FF0000;
+		}
+
+		.prop-infowindow {
+			text-align: center;
+		}
+
+		.prop-infowindow-name {
+			font-weight: bold;
+		}
+
+		.prop-infowindow-address {
+		}
+
+		.hide-panel {
+			display:none!important;
+		}
+
+		input#distance-slider:before {
+			content: "-";
+			font-size: 2em;
+			font-weight: bold;
+			padding-right: 2px;
+		}
+		input#distance-slider:after {
+			content: "+";
+			font-size: 2em;
+			font-weight: bold;
+			padding-left: 2px;
+		}
+
+		.propertyItem.selectedProperty{
+			box-shadow: 0px 2px 2px rgba(0, 0, 10, 0.1)!important;
+			border-color: rgb(0, 112, 210)!important;
+			border-bottom-width:3px!important;
+		}
+
+		.propertyItem.selectedProperty .slds-badge{
+			background-color:#0070d2!important;
+			color:white;
+		}
+
+		.icon-brand {
+			fill:#0070d2!important;
+			height:24px!important;
+			margin-bottom:3px!important;
+		}
+
+		.icon-location {
+			fill:#0070d2!important;
+			height:12px!important;
+			width:14px!important;
+			margin-bottom:3px!important;
+		}
+
+		.slds-badge.activePropSelection{
+			background-color:#0070d2;
+			color:white;
+		}
+		.slds-badge.inactivePropSelection{
+			min-width: 47px;
+			display: inline-block;
+			min-height: 21px;
+		}
+		.tab-icon-color {
+			height:13px!important;
+			width:20px!important;
+			margin-bottom:2px!important;
+			fill:white!important;
+		}
+
+		.icon-bar {
+			fill:#757575!important;
+			height:16px!important;
+			margin-left:-4px;
+		}
+
+		#search-spinner {
+			z-index: 10;
+		}
+
+	</style>
+	<div role="alert" id="search-spinner" class="hide-panel" style="position:fixed;width:100%;height:100%;background-color: rgba(0,0,0,.1);">>
+		<div class="slds-spinner slds-spinner_brand slds-spinner_medium">
+			<span class="slds-assistive-text">Loading</span>
+			<div class="slds-spinner__dot-a"></div>
+			<div class="slds-spinner__dot-b"></div>
+		</div>
+	</div>
+	<div id="slds-assistive-text" class="slds-assistive-text" role="alert">
+	</div>
+	<apex:outputPanel id="errPanel">
+		<div id="errorAlertBanner" style="z-index:99999999;position:fixed;" class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error hide-panel">
+			<c:PlaceSVG svgStyleClass="slds-icon slds-icon_x-small" styleClass="slds-icon_container slds-icon-utility-ban slds-m-right_x-small" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#ban')}"/>
+			<h2 id="errorAlertText" role="alert">
+				<apex:repeat value="{!ErrorMessages}" var="em">
+					{!em}
+					<br/>
+				</apex:repeat>
+				<script>
+					if({!ErrorMessages.size > 0}){
+						$("#errorAlertBanner").removeClass("hide-panel");
+					}
+				</script>
+			</h2>
+			<!-- TODO: This SVG technically needs to be wrapped in a <button> and not a <span> - unsure how to do that -->
+			<span onclick="hideErrorAlert();">
+				<c:PlaceSVG svgStyleClass="slds-button__icon" styleClass="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#close')}"/>
+			</span>
+		</div>
+	</apex:outputPanel>
+	<span class="{!IF(rebookWithProperty,'slds-hide','')}">
+		<c:GuestBar caseId="{!currentCaseId}" rendered="{!NOT(isStandAlone)}"/>
+		<script>
+			if({!isStandAlone}){
+				guestInfoUtility.setupConsoleIntegration();
+			}
+		</script>
+	</span>
+	<apex:form id="form1" styleClass="{!IF(rebookWithProperty,'slds-hide','')}">
+	<div class="slds-grid slds-wrap slds-grid_pull-padded" style="width:1200px;margin: 0px auto 0px auto;">
+		<div id="searchDiv" class=" slds-size_1-of-1 slds-grid slds-wrap slds-grid_pull-padded {!IF(NOT(initialSearchRun),'','slds-hide')}" style="margin:40px 20px 20px 20px;">
+			<div class="slds-grid slds-wrap slds-grid_pull-padded slds-p-horizontal_medium slds-size_7-of-12">
+				<h4 class="slds-size_1-of-1 slds-text-heading_medium" style="margin-bottom:1.5rem;">Find a location</h4>
+				<div class="slds-grid slds-wrap slds-size_1-of-1" style="width: 464px;height: 97px;border: 1px solid #d8dde6;border-radius: 4px;background-color: #ffffff;box-shadow: 0px 2px 2px rgba(0, 0, 10, 0.1);padding-top:16px;">
+					<div class="slds-size_2-of-3 slds-p-horizontal_medium slds-form-element" style="width:65%">
+						<label class="slds-form-element__label" for="searchPOIInp1">City, Airport, Address, Attraction, Hotel <span class="requiredAsterisk">*</span></label>
+						<div class="slds-form-element__control">
+							<input id="searchPOIInp1" tabindex="0" aria-label="Enter the location of their stay. Either location or property code is required. You can enter a city, airport, address, attraction, or hotel. As you type, suggestions will be available. Use arrow keys to make a selection." type="text" class="slds-input" style="height:32px" value="{!searchRequest.searchText}" autofocus="true"/>
+						</div>
+					</div>
+					<div style="display:inline-block;width:1px;height:61px;">
+						<div style="border-right:1px #d8dde6 solid;height:42px;margin-top:18px;"></div>
+					</div>
+					<div class="slds-size_1-of-3 slds-p-horizontal_medium slds-form-element">
+						<label class="slds-form-element__label" for="{!$Component.searchPropCodeInp}">Property Code</label>
+						<div class="slds-form-element__control">
+							<apex:inputText id="searchPropCodeInp" tabindex="0" styleClass="slds-input" style="height:32px;width:107px;" value="{!searchRequest.searchPropCode}" onchange="this.value=this.value.toUpperCase();toggleSRPSearchLinkPanel();" html-aria-label="Enter the property code. Either location or property code is required."/>
+						</div>
+					</div>
+				</div>
+				<div class="slds-size_1-of-1 mainDatePanel" style="margin-top:25px;">
+					<h4 class="slds-form-element__label slds-text-heading_medium" style="color:#16325c;margin-bottom:1.5rem;">Set Dates?</h4>
+					<div class="slds-size_1-of-2 slds-p-horizontal_medium slds-grid slds-grid_vertical" style="width: 464px;border: 1px solid #d8dde6;border-radius: 4px;background-color: #ffffff;box-shadow: 0px 2px 2px rgba(0, 0, 10, 0.1);">
+						<div id="calendar1_errormsg"></div>
+						<div id="calendar1" class="slds-grid slds-grid_pull-padded slds-m-bottom_small" style="padding-top:16px;">
+							<div class="slds-form-element slds-p-horizontal_small">
+								<label for="calendar1_arriving_input" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Filters_Arriving}"/></label>
+								<div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+									<div onclick="$('#calendar1').data('dateRangePicker').open();">
+										<c:RenderSVG styleClass="slds-input__icon slds-icon-text-default" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/standard-sprite/svg/symbols.svg#event')}"/>
+									</div>
+									<input id="calendar1_arriving_input" tabindex="0" aria-label="Set arrival date mm/dd/yyyy" type="text" class="slds-input searchArrivingNotLT" style="width:180px;" onblur="setCurrentNights(); clearErrorMsg(); toggleSRPSearchLinkPanel();"/>
+								</div>
+							</div>
+							<div style="padding-top:28px;padding-left:17px;padding-right:17px;text-align:center;color:#54698d;">to</div>
+							<div class="slds-form-element slds-p-horizontal_small">
+								<label for="departing_input" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Filters_Departing}"/></label>
+								<div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+									<div onclick="$('#calendar1').data('dateRangePicker').open();">
+										<c:RenderSVG styleClass="slds-input__icon slds-icon-text-default" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/standard-sprite/svg/symbols.svg#event')}"/>
+									</div>
+									<input id="calendar1_departing_input" tabindex="0" aria-label="Set departing date mm/dd/yyyy" type="text" class="slds-input searchDepartingNotLT" style="width:180px;" onkeyup="keypressEnterHandler(event,submitPropertySearch);" onblur="setCurrentNights(); clearErrorMsg(); toggleSRPSearchLinkPanel();"/>
+								</div>
+							</div>
+						</div>
+						<div id="srpErrMSG" class="slds-size_1-of-1" style="color:red;">
+						</div>
+						<div id="srpSearchLinkPanel" class="{!IF((searchRequest.searchPropCode == '' || searchRequest.searchPropCode == null) || (searchRequest.srpCodesCSV != '' && searchRequest.srpCodesCSV != null), 'slds-hide','')+' slds-size_1-of-1 slds-p-top_xx-small slds-text-align_right'}">
+							<a href="#" onclick="setErrorLocation('#srpErrMSG');validateBeforeSRPSearch();">Find a special rate plan / travel agent for these dates</a>
+						</div>
+						<div id="srpSearchInfoPanel" class="{!IF((searchRequest.searchPropCode != '' && searchRequest.searchPropCode != null) && (searchRequest.srpCodesCSV != '' && searchRequest.srpCodesCSV != null), '','slds-hide')+' slds-size_1-of-1 slds-p-top_xx-small slds-grid'}">
+							<div class="slds-size_1-of-2">
+								<h3 style="color: rgb(84, 105, 141);font-size: 0.75rem;line-height: 1.5;margin-right: 0.75rem;margin-bottom: 0.25rem;">Special rate plan applied</h3>
+								<div id="srpInfoList" >
+								</div>
+							</div>
+							<div class="slds-size_1-of-2">
+								<a href="#" onclick="changeSRPApplied();">
+									Change
+								</a>
+							</div>
+						</div>
+					</div>
+					<div id="calendar1_date_range_container" class="slds-size_1-of-1 slds-p-horizontal_medium" style="margin-top:10px; position: relative;">
+					</div>
+				</div>
+				<div style="margin-left:15px;font-size:1rem;">
+					<label id="currentNights"></label>
+				</div>
+				<!-- TRAVEL REASON START -->
+				<div class="slds-size_1-of-1 travelReasonPanel" style="margin-top:25px; margin-left:15px;">
+					<div class="slds-grid slds-wrap slds-size_1-of-1 slds-grid_pull-padded" style="width: 464px;height: 97px;border: 1px solid #d8dde6;border-radius: 4px;background-color: #ffffff;box-shadow: 0px 2px 2px rgba(0, 0, 10, 0.1);padding-top:16px;">
+						<div class="slds-form-element slds-p-horizontal_small">
+							<label class="slds-form-element__label" for="{!$Component.sel_TravelReason}">Travel Reason?</label>
+							<div class="slds-form-element__control">
+								<apex:selectList id="sel_TravelReason" tabindex="0" html-aria-label="Set travel reason" styleClass="slds-select" value="{!travelReason}" size="1">
+									<apex:selectOptions value="{!travelReasonOptions}"/>
+								</apex:selectList>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- TRAVEL REASON END -->
+			</div>
+			<div class="slds-size_5-of-12 slds-text-heading_medium slds-p-horizontal_medium slds-grid slds-wrap slds-grid_pull-padded" style="color:#545454;">
+				<apex:outputPanel id="initialSearchNumRoomsPanel" styleClass="{!IF(initialSearchRun, 'slds-hide', '')}">
+					<c:BookRoomComponent pageController="{!BookingReference}" componentClass="mainNumRoomMenu" rendered="{!NOT(initialSearchRun)}" onChangeScript="toggleSRPSearchLinkPanel();" />
+				</apex:outputPanel>
+				<div class="slds-size_1-of-1" style="width:85%;">
+					<hr/>
+				</div>
+				<div class="slds-size_1-of-1 slds-text-heading_medium" style="padding-left:1rem;">
+					<h4 style="color:#16325c;">Find matching properties</h4>
+					<button type="button" tabindex="0" aria-label="Show Properties. Press enter to search for properties with entered search criteria." class="slds-button slds-button_brand" style="font-size:.9rem;cursor:pointer;line-height:37px;height:40px;width:300px;margin-top:25px;" onclick="setErrorLocation('.propSearchMsg'); submitPropertySearch();" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}">Show Properties</button>
+				</div>
+				<div class="slds-size_1-of-1 slds-text-heading_medium propSearchMsg" style="font-size:.8rem;margin-top:25px;margin-left:25px;" role="alert">
+				</div>
+			</div>
+		</div>
+		<div id="resultsErrMsg" class="slds-size_1-of-1 slds-text-heading_medium" style="font-size:.8rem;margin-left:25px;">
+		</div>
+		<apex:outputPanel layout="block" id="propertyRequestDetailsPanel" styleClass="slds-size_1-of-1 slds-grid slds-wrap {!IF(initialSearchRun,'','slds-hide')}" style="height:69px;">
+			<div class="slds-size_3-of-12 slds-grid slds-grid_vertical-align-center" style="height:69px;border-right:1px #d8dde6 solid;background-color:#f5fbff;">
+				<div class="slds-size_1-of-1 slds-text-heading_medium" style="text-align:left;margin-left:21px;">
+					Booking started for:
+				</div>
+			</div>
+			<div class="slds-size_2-of-12 slds-grid" style="height:69px;border-right:1px #d8dde6 solid;background-color:#f5fbff;">
+				<div class="slds-size_5-of-12 slds-grid slds-text-align_center slds-grid_vertical-align-center">
+					<div class="slds-size_1-of-1" tabindex="0">
+						<!-- if rooms = 1 use room, else rooms -->
+						<span class="slds-text-heading_medium numRoomsDisplay" style="color:#16325c;font-weight:bold;margin-right:2px;"><apex:outputText value="{!reservationRequest.roomStays.size} "/></span>
+						<span style="font-size:1rem;color:#828282;">rooms</span>
+					</div>
+				</div>
+				<div class="slds-size_5-of-12 slds-grid slds-text-align_center slds-grid_vertical-align-center">
+					<div class="slds-size_1-of-1" style="text-align:left;margin-left:14px;">
+						<div class="adultsDisplay" tabindex="0">
+							<!-- if adults = 1 use adult, else adults -->
+							<apex:outputText value="{!reservationRequest.TotalAdults} adults"/>
+						</div>
+						<div class="childrenDisplay" tabindex="0">
+							<!-- if children = 1 use child, else children -->
+							<apex:outputText value="{!reservationRequest.TotalChildren} children"/>
+						</div>
+					</div>
+				</div>
+				<div class="slds-size_2-of-12 slds-text-align_center">
+					<span id="roomOccupancyEditIcon" onclick="showFilterNumRoomsModal();" tabindex="0" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}">
+						<c:PlaceSVG svgStyleClass="slds-icon slds-icon_x-small slds-icon-text-default icon-blue" styleClass="slds-icon_container slds-icon-utility-search slds-input__icon" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/action-sprite/svg/symbols.svg#edit')}"/>
+					</span>
+				</div>
+				<div class="slds-modal slds-fade-in-open slds-hide" id="changeRoomsFilterModal" role="dialog">
+					<apex:outputPanel id="filterRoomsPanel" layout="block" styleClass="slds-modal__container">
+						<c:BookRoomModalComponent pageController="{!BookingReference}" componentClass="modalNumRoomMenu" closeModalHandler="hideFilterNumRoomsModal();" rendered="{!initialSearchRun}"/>
+					</apex:outputPanel>
+				</div>
+			</div>
+			<div class="slds-size_4-of-12 slds-grid" style="height:69px;border-right:1px #d8dde6 solid;background-color:#f5fbff;">
+				<apex:outputPanel id="datesPanel" layout="block" styleClass="slds-size_1-of-1 slds-grid">
+					<!-- BEFORE DATES div -->
+					<div id="beforeDatesPanel" class="slds-size_1-of-1 slds-grid slds-grid_vertical-align-center {!IF(searchRequest.DatesSelected,'slds-hide','')}">
+						<div class="slds-size_1-of-1">
+							No dates of stay specified. <a style="margin-left:2px;" onclick="toggleDatesPanel();" tabindex="0">Set dates of stay</a>
+						</div>
+					</div>
+
+					<!-- AFTER DATES PANEL -->
+					<div id="afterDatesPanel" class="slds-size_1-of-1 slds-grid {!IF(searchRequest.DatesSelected,'','slds-hide')}">
+						<div class="slds-size_3-of-12 slds-grid slds-text-align_center slds-grid_vertical-align-center">
+							<div class="slds-size_1-of-1" tabindex="0">
+								<!-- if numnights = 1 use night, else nights -->
+								<span class="slds-text-heading_medium numNightsDisplay" style="color:#16325c;font-weight:bold;margin-right:2px;"><apex:outputText value="{!searchRequest.NumNights}"/></span>
+								<span style="font-size:1rem;color:#828282;">nights</span>
+							</div>
+						</div>
+						<div class="slds-size_1-of-12">
+							<div style="width:1px;height:60%;margin-top:14px;border-right:1px #d1d1d1 solid;"></div>
+						</div>
+						<div class="slds-size_8-of-12 slds-grid slds-grid_vertical-align-center">
+							<div class="slds-size_1-of-1" style="margin-left:5px;text-align:left;">
+								<div>
+									Arriving:
+									<a class="arrivingDisplay" style="margin-left:2px;"  href="#" onclick="toggleDatesPanel(); setInitialDates(); return false;" tabindex="0">
+										<apex:outputText value="{0,date,E MMM d, yyyy}">
+											<apex:param value="{!searchRequest.ArrivalDate}"/>
+										</apex:outputText>
+									</a>
+								</div>
+								<div>
+									Departing:
+									<a  class="departingDisplay" style="margin-left:2px;"  href="#" onclick="toggleDatesPanel(); setInitialDates(); return false;" tabindex="0">
+										<apex:outputText value="{0,date,E MMM d, yyyy}">
+											<apex:param value="{!searchRequest.DepartureDate}"/>
+										</apex:outputText>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+						<span onclick="toggleDatesPanel(); setInitialDates(); return false;" style="cursor:pointer;float:right;margin-right:3px;">
+							<c:PlaceSVG svgStyleClass="slds-icon slds-icon_x-small slds-icon-text-default icon-blue" styleClass="slds-icon_container slds-icon-utility-search slds-input__icon" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/action-sprite/svg/symbols.svg#edit')}"/>
+						</span>
+				</apex:outputPanel>
+			</div>
+			<div class="slds-size_3-of-12 slds-p-around_x-small" style="background-color:#f5fbff;">
+				<c:BookingFlowPath currentStep="2" navigateToStep1Handler="redirectToLocationSearch();"/>
+			</div>
+		</apex:outputPanel>
+		<div id="setDatesDiv" class="hide-panel slds-size_1-of-1 slds-grid" style="height:77px;border:1px #d8dde6 solid;border-bottom: 3px #0070d2 solid;background:#fff;text-align:center;">
+			<div class="slds-size_3-of-12 slds-grid slds-grid_vertical-align-center">
+				<div class="slds-size_1-of-1" style="font-weight:bold;">
+					Set dates of stay to confirm availability:
+				</div>
+			</div>
+			<div class="slds-size_7-of-12 slds-grid slds-grid_vertical-align-center">
+				<div class="slds-size_1-of-1" style="text-align:left;margin-left:5px;">
+					<div id="calendar2_errormsg"></div>
+					<div id="calendar2" class="slds-grid slds-grid_pull-padded slds-m-bottom_small">
+						<div class="slds-form-element slds-p-horizontal_small">
+							<label for="calendar2_arriving_input" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Filters_Arriving}"/></label>
+							<div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+								<div onclick="$('#calendar2').data('dateRangePicker').open();">
+									<c:RenderSVG styleClass="slds-input__icon slds-icon-text-default" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/standard-sprite/svg/symbols.svg#event')}"/>
+								</div>
+								<input type="text" id="calendar2_arriving_input" class="slds-input searchArrivingNotLT" onkeyup="keypressDateHandler(event);"/>
+							</div>
+						</div>
+						<div class="slds-form-element slds-p-horizontal_small">
+							<label for="departing_input" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Filters_Departing}"/></label>
+							<div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+								<div onclick="$('#calendar2').data('dateRangePicker').open();">
+									<c:RenderSVG styleClass="slds-input__icon slds-icon-text-default" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/standard-sprite/svg/symbols.svg#event')}"/>
+								</div>
+								<input type="text" id="calendar2_departing_input" class="slds-input searchDepartingNotLT"/>
+							</div>
+						</div>
+					</div>
+					<div id="calendar2_date_range_container" style="margin-top:10px;position: relative;z-index:9999;">
+					</div>
+				</div>
+			</div>
+			<div class="slds-size_2-of-12 slds-grid slds-grid_vertical-align-center">
+				<div class="slds-size_1-of-1">
+					<div class="slds-button slds-button_brand" style="cursor:pointer;" onclick="submitFilters();$('#setDatesDiv').addClass('hide-panel');setFlexibleDatesByDateBar();" tabindex="0" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}">Check Availability</div>
+				</div>
+			</div>
+		</div>
+		<div id="resultsDiv" class=" slds-size_1-of-1 slds-grid slds-wrap {!IF(initialSearchRun,'','slds-hide')}" style="text-align:center;">
+			<div class="slds-size_1-of-4 slds-grid slds-wrap" style="min-height:400px;border:1px #d8dde6 solid;">
+				<div class="slds-size_1-of-1 slds-grid slds-wrap" style="border-bottom:1px #d8dde6 solid;height:104px;">
+					<div class="slds-size_1-of-1 slds-p-horizontal_medium slds-form-element" style="text-align:left;margin-top:10px;margin-bottom:10px;width:90%">
+						<label class="slds-form-element__label" for="{!$Component.searchPOIInp2}">Find a location:</label>
+						<div class="slds-form-element__control">
+							<input type="text" id="searchPOIInp2" tabindex="0" class="slds-input" style="height:32px;" value="{!searchRequest.searchText}"/>
+						</div>
+						<a style="text-decoration:underline;float:right;margin-top:4px;" onclick="submitFilters(); return false;" tabindex="0">Search</a>
+					</div>
+				</div>
+				<div class="slds-size_1-of-1 slds-grid slds-wrap" style="margin-bottom:5px;">
+					<div class="slds-form-element slds-size_1-of-1 slds-p-horizontal_small" style="margin-top:20px;margin-bottom:10px;">
+						<div class="distance-metric-toggle slds-form-element__label">
+							Within
+							<span id="distance-slider__value" style="margin-right:25px;"></span>
+							<span class="slds-radio">
+							  <input type="radio" id="miles" name="distUnit" checked="checked" value="mi" onclick="submitFilters();"/>
+								<label class="slds-radio__label" for="miles">
+									<span class="slds-radio_faux"></span>
+									<span class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Location_Miles}"/></span>
+								</label>
+							</span>
+							<span class="slds-radio">
+								<input type="radio" id="km" name="distUnit" checked="" value="km" onclick="submitFilters();"/>
+								<label class="slds-radio__label" for="km">
+									<span class="slds-radio_faux"></span>
+									<span class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Location_KM}"/></span>
+								</label>
+							</span>
+						</div>
+					</div>
+					<div class="slds-form-element slds-size_1-of-1 slds-p-horizontal_small">
+					  <input type="range" id="distance-slider" min="0" value="10" max="100" step="5"></input>
+					</div>
+				</div>
+				<div class="slds-size_1-of-1 slds-grid" style="margin-top:5px;margin-bottom:20px;">
+					<div class="slds-size_1-of-2" style="font-size:.75rem;">Found&nbsp;<span id="resultSize"></span> properties</div>
+					<div class="slds-size_1-of-2" style="font-size:.75rem;">
+						<style>
+							.icon-refresh {
+								fill:#0070d2!important;
+								height:11px!important;
+								margin-bottom:2px!important;
+							}
+						</style>
+						<apex:outputPanel rendered="{!!isUsingAccessibilityMode}">
+							<a onclick="propertyMap.refresh();">
+								<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-refresh" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#refresh')}"/>
+								Reset map
+							</a>
+						</apex:outputPanel>
+					</div>
+				</div>
+				<div id="propertyMap" class="slds-size_1-of-1" style="height:250px;border-bottom:1px #d8dde6 solid;">
+					map
+				</div>
+				<div class="slds-size_1-of-1 slds-grid">
+					<div class="slds-section slds-is-open slds-grid slds-wrap" style="padding-left:20px;padding-right:20px;padding-bottom:20px;width:298px;">
+						<button aria-controls="expando-unique-id" aria-expanded="true" class="slds-size_1-of-1 slds-button" style="text-align:left;border-bottom:1px #d8dde6 solid;cursor:pointer;" tabindex="0" onclick="toggleFilters(this)" type="button">
+							<span class="slds-truncate" style="margin-left:5px;font-size:.8rem;color:#16325c;">Filter By</span>
+							<style>
+								.icon-dropdown {
+									fill:#54698d!important;
+									height:16px!important;
+								}
+							</style>
+							<div id="filters-expanded-icon" class="arrowSVG slds-float_right">
+								<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#up')}"/>
+							</div>
+							<div id="filters-collapsed-icon" class="arrowSVG slds-hide slds-float_right">
+								<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#down')}"/>
+							</div>
+						</button>
+						<div aria-hidden="false" class="slds-section__content slds-size_1-of-1" id="filterByContent" style="padding-top:0px;">
+							<button aria-controls="expando-unique-id" aria-expanded="false" class="slds-size_1-of-1 slds-button" style="text-align:left;border-bottom:1px #d8dde6 solid;cursor:pointer;" onclick="toggleBrandsFilter(this)" tabindex="0" type="button">
+								<span class="slds-truncate" style="margin-left:10px;font-size:.8rem;color:#16325c;">Brands</span>
+								<div id="brands-expanded-icon" class="arrowSVG slds-hide slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#dash')}"/>
+								</div>
+								<div id="brands-collapsed-icon" class="arrowSVG slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#add')}"/>
+								</div>
+							</button>
+							<div aria-hidden="false" class="slds-section__content slds-size_1-of-1" id="brandContent" style="{!IF(searchRequest.brandsCSV == null || searchRequest.brandsCSV=='','display:none;','')} text-align:left;border-bottom:1px #d8dde6 solid;padding-top:0px;">
+								<div class="slds-col slds-grid slds-grid_pull-padded" style="margin-top:10px;margin-bottom:10px;">
+									<fieldset class="slds-form-element">
+										<div class="slds-form-element__control slds-grid slds-wrap">
+											<apex:repeat value="{!brandOptions}" var="brandOpt">
+												<span class="slds-checkbox slds-size_1-of-1 slds-p-horizontal_small" style="margin-left:11px;margin-bottom:2px;">
+													<input type="checkbox" name="inputBrand" id="brand{!JSENCODE(brandOpt.DeveloperName)}" value="{!JSENCODE(brandOpt.DeveloperName)}" checked="" onclick="submitFilters();"/>
+													<label for="brand{!JSENCODE(brandOpt.DeveloperName)}" class="slds-checkbox__label">
+														<span class="slds-checkbox_faux" style="margin-top:2px;"></span>
+														<span class="slds-form-element__label"><apex:outputText value="{!brandOpt.MasterLabel}"/></span>
+													</label>
+												</span>
+											</apex:repeat>
+										</div>
+									</fieldset>
+								</div>
+							</div>
+							<button aria-controls="expando-unique-id" aria-expanded="false" class="slds-size_1-of-1 slds-button" style="text-align:left;border-bottom:1px #d8dde6 solid;cursor:pointer;" tabindex="0" onclick="toggleAmenitiesFilter(this)" type="button">
+								<span class="slds-truncate" style="margin-left:10px;font-size:.8rem;color:#16325c;">Amenities</span>
+								<div id="amenities-expanded-icon" class="arrowSVG slds-hide slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#dash')}"/>
+								</div>
+								<div id="amenities-collapsed-icon" class="arrowSVG slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#add')}"/>
+								</div>
+							</button>
+							<div aria-hidden="false" class="slds-section__content slds-size_1-of-1" id="amenityContent" style="display:none;text-align:left;border-bottom:1px #d8dde6 solid;padding-top:0px;">
+								<div class="slds-col slds-grid slds-grid_pull-padded" style="margin-top:10px;margin-bottom:10px;">
+									<fieldset class="slds-form-element">
+										<div class="slds-form-element__control slds-grid slds-wrap">
+											<apex:repeat value="{!amenityOptions}" var="amenOpt">
+												<span class="slds-checkbox slds-size_1-of-1 slds-p-horizontal_small" style="margin-left:11px;margin-bottom:2px;">
+													<input type="checkbox" name="inputAmenity" id="amenity{!JSENCODE(amenOpt.Amenity_Id__c)}" value="{!JSENCODE(amenOpt.Amenity_Id__c)}" checked="" onclick="submitFilters();"/>
+													<label for="amenity{!JSENCODE(amenOpt.Amenity_Id__c)}" class="slds-checkbox__label">
+														<span class="slds-checkbox_faux" style="margin-top:2px;"></span>
+														<span class="slds-form-element__label"><apex:outputText value="{!amenOpt.Description__c}"/></span>
+													</label>
+												</span>
+											</apex:repeat>
+										</div>
+									</fieldset>
+								</div>
+							</div>
+							<button aria-controls="expando-unique-id" aria-expanded="false" class="slds-size_1-of-1 slds-button" style="text-align:left;border-bottom:1px #d8dde6 solid;cursor:pointer;" tabindex="0" onclick="toggleRatePlans(this)" type="button">
+								<span class="slds-truncate" style="margin-left:10px;font-size:.8rem;color:#16325c;">Rate Plans</span>
+								<div id="rate-plan-expanded-icon" class="arrowSVG slds-hide slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#dash')}"/>
+								</div>
+								<div id="rate-plan-collapses-icon" class="arrowSVG slds-float_left">
+									<c:PlaceSVG svgStyleClass="slds-icon slds-icon_small icon-dropdown" styleClass="slds-icon_container" path="{!URLFOR($Resource.hlt_assets, 'img/salesforce_icons/utility-sprite/svg/symbols.svg#add')}"/>
+								</div>
+							</button>
+							<div aria-hidden="false" class="slds-section__content slds-size_1-of-1" id="rateContent" style="display:none;text-align:left;border-bottom:1px #d8dde6 solid;padding-top:0px;">
+								<div style="margin-top:10px;margin-bottom:10px;">
+									<div class="slds-grid slds-grid_pull-padded">
+										<fieldset class="slds-size_1-of-1 slds-form-element">
+											<div class="slds-form-element__control slds-grid slds-wrap">
+												<span class="slds-checkbox slds-size_1-of-2 slds-p-horizontal_small slds-m-bottom_xx-small">
+													<input type="checkbox" name="ratePlans" id="inputAARPRate" checked="" value="{!JSENCODE($Label.ICJ_Rates_Plan_AARP)}" onclick="submitFilters();"/>
+													<label for="inputAARPRate" class="slds-checkbox__label">
+													<span class="slds-checkbox_faux" style="margin-top:2px;margin-left:11px;"></span>
+													<span class="slds-form-element__label" style="font-size:.7rem;"><apex:outputText value="{!$Label.ICJ_RatePlans_Label_AARP}"/></span>
+													</label>
+												</span>
+												<span class="slds-checkbox slds-size_1-of-2 slds-p-horizontal_small slds-m-bottom_xx-small">
+													<input type="checkbox" name="ratePlans" id="inputAAARate" checked="" value="{!JSENCODE($Label.ICJ_Rates_Plan_AAA)}" onclick="submitFilters();"/>
+													<label for="inputAAARate" class="slds-checkbox__label">
+													<span class="slds-checkbox_faux" style="margin-top:2px;"></span>
+													<span class="slds-form-element__label" style="font-size:.7rem;"><apex:outputText value="{!$Label.ICJ_RatePlans_Label_AAA}"/></span>
+													</label>
+												</span>
+												<span class="slds-checkbox slds-size_1-of-2 slds-p-horizontal_small">
+													<input type="checkbox" name="ratePlans" id="inputSeniorRate" checked="" value="{!JSENCODE($Label.ICJ_Rates_Plan_SENIOR)}" onclick="submitFilters();"/>
+													<label for="inputSeniorRate" class="slds-checkbox__label">
+													<span class="slds-checkbox_faux" style="margin-top:2px;margin-left:11px;"></span>
+													<span class="slds-form-element__label" style="font-size:.7rem;"><apex:outputText value="{!$Label.ICJ_RatePlans_Label_SENIOR}"/></span>
+													</label>
+												</span>
+												<span class="slds-checkbox slds-size_1-of-2 slds-p-horizontal_small">
+													<input type="checkbox" name="ratePlans" id="inputGovMilRate" checked="" value="{!JSENCODE($Label.ICJ_Rates_Plan_GOV)}" onclick="submitFilters();"/>
+													<label for="inputGovMilRate" class="slds-checkbox__label">
+													<span class="slds-checkbox_faux" style="margin-top:2px;"></span>
+													<span class="slds-form-element__label" style="font-size:.7rem;"><apex:outputText value="{!$Label.ICJ_RatePlans_Label_GOVT}"/></span>
+													</label>
+												</span>
+											</div>
+										</fieldset>
+									</div>
+									<div class="slds-grid slds-grid_pull-padded slds-m-bottom_small" style="margin-left:1px;margin-top:15px;">
+										<div class="slds-size_1-of-2 slds-form-element slds-p-horizontal_small">
+											<label for="inputSRPCode" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Rates_SRP}"/></label>
+											<div class="slds-form-element__control">
+												<input type="text" id="inputSRPCode" class="slds-input" onchange="submitFilters();"/>
+											</div>
+										</div>
+										<div class="slds-size_1-of-2 slds-form-element slds-p-horizontal_small">
+											<label for="inputCorpCode" class="slds-form-element__label"><apex:outputText value="{!$Label.QuickSearchDetails_Rates_Corp}"/></label>
+											<div class="slds-form-element__control">
+												<input type="text" id="inputCorpCode" class="slds-input" onchange="submitFilters();"/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="slds-size_3-of-4 slds-grid slds-wrap" style="min-height:400px;box-shadow:-1px 0px 0 0 #d8dde6;border-top:1px #d8dde6 solid;border-bottom:1px #d8dde6 solid;border-right:1px #d8dde6 solid;margin-bottom:20px;">
+				<apex:outputPanel styleClass="slds-size_1-of-1 slds-grid slds-wrap">
+					<div id="sortBar" class="slds-size_1-of-1 slds-grid slds-grid_vertical-align-center slds-wrap" style="height:56px;">
+						<div class="slds-size_1-of-2 slds-grid">
+							<div id="availableRadioButtonPanel" class="slds-size_1-of-1" style="display:none;">
+								<div style="display:inline-block;font-weight:bold;">Displaying:</div>
+								<div class="slds-form-element slds-size_1-of-1 slds-p-horizontal_small" style="top:3px;display:inline;">
+									<div class="distance-metric-toggle slds-form-element__label">
+										<span class="slds-radio">
+											<input type="radio" id="allProp" name="propRadio" checked="checked" value="ALL" onclick="filterCurrentResults();"/>
+											<label class="slds-radio__label" for="allProp">
+												<span class="slds-radio_faux"></span>
+												<span class="slds-form-element__label">
+													<apex:outputText value="All Properties"/>
+												</span>
+											</label>
+										</span>
+										<span class="slds-radio">
+											<input type="radio" id="availProp" name="propRadio" checked="" value="AVAILABLE" onclick="filterCurrentResults();"/>
+											<label class="slds-radio__label" for="availProp">
+												<span class="slds-radio_faux"></span>
+												<span class="slds-form-element__label">
+													<apex:outputText value="Available Properties"/>
+												</span>
+											</label>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="slds-size_1-of-2 slds-grid" style="height:56px;">
+							<div class="slds-size_1-of-4 slds-grid slds-grid_vertical-align-center" style="margin-left:-2px;">
+								<fieldset class="slds-form-element">
+									<legend aria-label="Choose to use money or points"></legend>
+									<div class="slds-form-element__control">
+										<div class="slds-radio_button-group">
+											<span class="slds-button slds-radio_button">
+												<input name="radio" type="radio" id="moneyRadio" value="money" onchange="togglePointsAndMoney(this)" data-redemption-type="money" checked="checked" aria-label="Money" aria-describedby="moneyRadioDesc"/>
+												<label class="slds-radio_button__label" for="moneyRadio">
+													<span class="slds-radio_faux slds-m-horizontal_medium">$</span>
+													<span id="moneyRadioDesc" class="slds-hide">To change the selection use the arrow keys. When the selection is changed the page will automatically refresh</span>
+												</label>
+											</span>
+											<span class="slds-button slds-radio_button">
+												<input name="radio" type="radio" id="pointsRadio" value="points" onchange="togglePointsAndMoney(this)" data-redemption-type="points" aria-describedby="pointsRadioDesc"/>
+												<label class="slds-radio_button__label" for="pointsRadio">
+													<span class="slds-radio_faux">Points</span>
+													<span id="pointsRadioDesc" class="slds-hide">To change the selection use the arrow keys. When the selection is changed the page will automatically refresh</span>
+												</label>
+											</span>
+										</div>
+									</div>
+								</fieldset>
+							</div>
+							<div class="slds-size_3-of-4 slds-grid slds-grid_vertical-align-center">
+								<div class="slds-size_1-of-1">
+									<div class="slds-select_container" style="display:inline-block;margin-right:5px;width:139px;">
+										<select id="sel-Sort" class="slds-select" onchange="resortProperties();" tabindex="0">
+											<option value="DIST">Sort by: Distance</option>
+											<option value="RATE">Sort by: Rate</option>
+										</select>
+									</div>
+									<c:CurrencyCodeOption selectId="sel-Currency" onchange="submitFilters();" containerStyle="display:inline-block;width:88px;"/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="compareBar" class="slds-size_1-of-1 slds-grid slds-grid_vertical-align-center slds-wrap" style="height:32px;margin-top:5px;margin-bottom:10px;">
+						<div id="foundPropertiesIdSecondPage" class="slds-size_1-of-4" style="height:23px;width:156px;margin-left:36px;text-align:left;border-right:1px solid #d8dde6;" tabindex="0">
+							Found&nbsp;<span id="resultSize2"></span> properties
+							<p id="propertySizeDescription" class="slds-assistive-text">Use the arrow keys to browse the results. When you want to make your selection, press enter.</p>
+						</div>
+						<div class="slds-size_1-of-4" style="height:23px;margin-left:36px;text-align:left;width:160px;">
+							<span id="propertiesInMapView"></span>
+						</div>
+						<apex:outputPanel rendered="{!!isUsingAccessibilityMode}">
+							<div class="slds-grid_align-end">
+								<span id="badgeSelected" style="display:inline-block;display:none;margin-left:44px;">
+									<span class="slds-badge inactivePropSelection"></span>
+									<span class="slds-badge inactivePropSelection"></span>
+									<span class="slds-badge inactivePropSelection"></span>
+									<span class="slds-badge inactivePropSelection"></span>
+								</span>
+								<span id="noBadgeSelected">
+									Click up to 4 properties below to compare&nbsp;
+								</span>
+								<button id="compareProperties_Button" style="margin-left:5px;" class="slds-button slds-button_brand" onclick="compareSelectedProperties(); return false;" disabled="disabled">Compare selected properties</button>
+							</div>
+						</apex:outputPanel>
+					</div>
+				</apex:outputPanel>
+				<style>
+					.results-box {
+						border-top: 1px solid #d8dde6;
+						margin-bottom:20px;
+						padding-left:16px;
+						min-height:275px;
+					}
+				</style>
+				<apex:outputPanel id="propertySearchResults" styleClass="slds-size_1-of-1 slds-grid slds-wrap results-box" style="position:relative;">
+				</apex:outputPanel>
+			</div>
+		</div>
+		<div id="flexibleDates" class="slds-hide slds-size_1-of-1">
+			<c:Book_FlexibleDates id="flexibleDatesComponent" caseId="{!currentCaseId}" parentSearchRequest="{!searchRequest}" propCode="{!selectedPropCode}" showPropertyBar="true"/>
+			<script>if (overrideFlexibleDates) overrideFlexibleDates();</script>
+		</div>
+	</div>
+	<c:SRPLookupComponent id="SRPLookup" propertyName="{!validatedProperty.Name}" onCloseModal="onCloseSRP();" />
+	<apex:outputPanel id="requestInputsPanel">
+		<apex:inputHidden value="{!searchRequest.rooms}" id="numRoomsSearchInp"/>
+		<apex:inputHidden value="{!searchRequest.adults}" id="numAdultsSearchInp"/>
+		<apex:inputHidden value="{!searchRequest.children}" id="numChildSearchInp"/>
+		<apex:inputHidden value="{!searchRequest.distanceUnit}" id="distUnitInp"/>
+		<apex:inputHidden value="{!searchRequest.searchRadius}" id="radiusInp"/>
+		<apex:inputHidden value="{!searchRequest.corpCodesCSV}" id="corpCodesInp"/>
+		<apex:inputHidden value="{!searchRequest.srpCodesCSV}" id="srpCodesInp"/>
+		<apex:inputHidden value="{!searchRequest.srpNamesCSV}" id="srpNamesInp"/>
+		<apex:inputHidden value="{!searchRequest.brandsCSV}" id="brandsInp"/>
+		<apex:inputHidden value="{!searchRequest.ratePlansCSV}" id="ratePlansInp"/>
+		<apex:inputHidden value="{!searchRequest.amenitiesCSV}" id="amenitiesInp"/>
+		<apex:inputHidden value="{!searchRequest.searchText}" id="searchTextInp"/>
+		<apex:inputHidden value="{!searchRequest.searchLat}" id="latInp"/>
+		<apex:inputHidden value="{!searchRequest.searchLong}" id="lngInp"/>
+		<apex:inputHidden value="{!searchRequest.departing}" id="departingInp"/>
+		<apex:inputHidden value="{!searchRequest.arriving}" id="arrivingInp"/>
+		<apex:inputHidden value="{!searchRequest.sortByField}" id="sortByFieldInp"/>
+		<apex:inputHidden value="{!searchRequest.currencyCode}" id="currencyCodeInp"/>
+		<apex:inputHidden value="{!searchRequest.tier}" id="tierInp"/>
+		<apex:inputHidden value="{!searchRequest.redemptionType}" id="redemptionTypeInp"/>
+		<apex:inputHidden value="{!searchRequest.srpCodeJSONList}" id="srpCodesJSONInp"/>
+		<apex:inputHidden value="{!reservationRequest.appliedClient.clientId}" id="book_clientId"/>
+		<apex:inputHidden value="{!reservationRequest.appliedClient.clientName}" id="book_clientName"/>
+		<apex:inputHidden value="{!reservationRequest.travelAgent.clientId}" id="book_travelAgent"/>
+		<apex:inputHidden value="{!initialSearchRun}" id="initialSearchRunInp"/>
+		<apex:inputHidden value="{!selectedBrandCode}" id="selectedBrandCodeInp"/>
+		<apex:inputHidden value="{!selectedPropCode}" id="selectedPropertyCodeInp"/>
+
+		<apex:inputHidden id="showAvailableInp" value="{!showAvailable}"/>
+		<apex:inputHidden value="{!reservationRequest.propCode}" id="book_propCode"/>
+		<apex:inputHidden value="{!reservationRequest.brandCode}" id="book_brandCode"/>
+		<apex:inputHidden value="{!reservationRequest.crsFlag}" id="book_crsFlag"/>
+		<apex:inputHidden value="{!reservationRequest.corporateCodesCSV}" id="book_corpCodes"/>
+
+
+		<input type="hidden" value="{!reservationRequest.roomStays.size}" id="numRoomsMainInp"/>
+		<input type="hidden" value="{!ErrorsJSON}" id="hidErrorMsgPayment"/>
+		<input type="hidden" value="{!HasErrors}" id="hidHasErrorMsgPayment"/>
+	</apex:outputPanel>
+		<input type="hidden" value="" id="arrivingUIFormatInp"/>
+		<input type="hidden" value="" id="departingUIFormatInp"/>
+		<input type="hidden" value="" id="subTabID"/>
+		
+		<apex:actionFunction action="{!navigateToSelectRoomRates}" name="redirectToSelectRoomRates"/>
+		<apex:actionFunction action="{!navigateToPaymentDetails}" name="redirectToPaymentDetails"/>
+		<apex:actionFunction action="{!clearRoomsBookingInfo}"  name="clearBookings" oncomplete="redirectToSelectRoomRates();" />
+		<apex:actionFunction action="{!validateSearchPropertyCode}" name="validatePropertyCodeAndOpenSRP" reRender="errPanel,srpLookup" oncomplete="openSRPSearch({!HasErrors})"/>
+		<apex:actionFunction action="{!updateForm}" name="submitSearch"
+				reRender="propertySearchResults,propertyRequestDetailsPanel,filterRoomsPanel,initialSearchNumRoomsPanel,errPanel"
+				oncomplete="if({!NOT(HasErrors)})initiateNewSearchAction();"/>
+		<apex:actionFunction action="{!navigateToLocationSearch}" name="redirectToLocationSearch"/>
+		<apex:actionFunction action="{!navigateToPropertySearch}" name="redirectToPropertySearch"/>
+		<apex:actionFunction action="{!rerenderFlexibleDates}" name="setFlexibleDateFields" status="waitStatus" onComplete="initializeFlexibleDatesByProperty();" />
+	</apex:form>
+		<script>
+			var isUsingAccessibilityMode = {!isUsingAccessibilityMode};
+
+			$(function () {
+				createDatePicker('calendar1', function(){
+					clearErrorMsg();
+					setCurrentNights();
+					toggleSRPSearchLinkPanel();
+				});
+				createDatePicker('calendar2', function(){});
+
+				$("#resultsDiv").on("click",".propertyItem .prop-checkbox",propertyClickHandler);
+				$("#resultsDiv").on("click",".availableProp .book-button",availablePropOpenHandler);
+				$("#resultsDiv").on("click",".propertyItem .property-link-class",unavailablePropOpenHandler);
+
+				$('#distance-slider').on("change", function(){
+					if( $(this).val() == 0){
+						showErrorAlert("Please select a distance bigger than 0 miles");
+					}else{
+						submitFilters();
+					}
+				});
+
+				sforce.console.getEnclosingTabId(getSubTabID);
+				reloadFilterInputs();
+				
+				if({!initialSearchRun}){
+					setSearchTabLabel();
+					submitFilters();
+				}
+
+				if({!AND(runInitialLoadSearch, !initialSearchRun)}){
+					submitPropertySearch();
+				}
+
+				if({!rebookWithProperty}){
+					autoSelectProperty()
+				}
+				
+				reloadCalendar();
+				populateSRPSearchInfoPanel();
+			});
+
+			function toggleFilters(el) {
+				toggleAriaExpanded(el);
+				$('#filters-expanded-icon').toggle();
+				$('#filters-collapsed-icon').toggle();
+				$('#filterByContent').toggle();
+			}
+
+			function toggleBrandsFilter(el) {
+				toggleAriaExpanded(el);
+				$('#brands-expanded-icon').toggle();
+				$('#brands-collapsed-icon').toggle();
+				$('#brandContent').toggle();
+			}
+
+			function toggleAmenitiesFilter(el) {
+				toggleAriaExpanded(el);
+				$('#amenities-expanded-icon').toggle();
+				$('#amenities-collapsed-icon').toggle();
+				$('#amenityContent').toggle();
+			}
+
+			function toggleRatePlans(el) {
+				toggleAriaExpanded(el);
+				$('#rate-plan-expanded-icon').toggle();
+				$('#rate-plan-collapses-icon').toggle();
+				$('#rateContent').toggle();
+			}
+
+			function toggleAriaExpanded(el) {
+				let isExpanded = $(el).attr('aria-expanded') === 'true';
+				$(el).attr('aria-expanded', !isExpanded);
+			}
+
+			function overrideFlexibleDates() {
+				flexibleDates.onCloseHandler = function() {
+					closeFlexibleDates();
+				};
+
+				flexibleDates.onSubmitHandler = function() {
+					flexibleDates.onWaitStartHandler();
+					let numNights = $(".numNightsDisplay").text();
+					let arrivalDate = flexibleDates.selectedDate.format('ddd MMM D[,] YYYY');
+					let departureDate = flexibleDates.selectedDate.add(numNights, 'days').format('ddd MMM D[,] YYYY');
+					$("#calendar1_arriving_input").val(arrivalDate);
+					$("#calendar1_departing_input").val(departureDate);
+					$("#calendar2_arriving_input").val(arrivalDate);
+					$("#calendar2_departing_input").val(departureDate);
+					$("[id$='book_propCode']").val(flexibleDates.propCode);
+					$("[id$='book_brandCode']").val(flexibleDates.brandCode);
+					$("input[name='ratePlans']").each(function () {
+						if (flexibleDates.rateCategory === $(this).val()) {
+							this.checked = true;
+						}
+					});
+					submitFilters();
+					chooseProperty(flexibleDates.propCode);
+				};
+
+				flexibleDates.onPointsAndMoneyChange = function() {
+					togglePointsAndMoney(flexibleDates.redemptionButton);
+				};
+			}
+			overrideFlexibleDates();
+
+			function goToFlexibleDates(propCode, brandCode, crsFlag) {
+				flexibleDates.onWaitStartHandler();
+				$("[id$=':book_propCode']").val(propCode.toUpperCase());
+				$("[id$=':selectedPropertyCodeInp']").val(propCode.toUpperCase());
+				showFlexibleDates();
+				flexibleDates.propCode = propCode;
+				flexibleDates.brandCode = brandCode;
+				flexibleDates.crsFlag = crsFlag;
+				setFlexibleDateFields();
+			}
+
+			function showFlexibleDates() {
+				$('#resultsDiv').addClass('slds-hide');
+				$('#flexibleDates').removeClass('slds-hide');
+				$('#roomOccupancyEditIcon').addClass('slds-hide');
+			}
+
+			function initializeFlexibleDatesByProperty() {
+				let arrivalDate = $(".arrivingDisplay").text().trim();
+				flexibleDates.initialize(arrivalDate, $('[id$="redemptionTypeInp"]').val());
+			}
+
+			function setFlexibleDatesByDateBar() {
+				if (!$('#flexibleDates').hasClass('slds-hide')) {
+					flexibleDates.initialize($("#calendar2_arriving_input").val(), $('[id$="redemptionTypeInp"]').val());
+				}
+			}
+
+			function closeFlexibleDates() {
+				$('#resultsDiv').removeClass('slds-hide');
+				$('#flexibleDates').addClass('slds-hide');
+				$('#roomOccupancyEditIcon').removeClass('slds-hide');
+			}
+
+			function chooseProperty(propCode) {
+				$("[id$=':selectedPropertyCodeInp']").val(propCode.toUpperCase());
+				redirectToSelectRoomRates();
+			}
+
+			function autoSelectProperty(){
+					var brandCode = $("[id$=':selectedBrandCodeInp']").val();
+					var propCode = $("[id$=':searchPropCodeInp']").val();
+					$("[id$=':book_brandCode']").val(brandCode);
+					$("[id$=':book_propCode']").val(propCode.toUpperCase());
+					$("[id$=':selectedPropertyCodeInp']").val(propCode.toUpperCase());
+					redirectToSelectRoomRates();
+			}
+
+			var getSubTabID = function getSubTabID(result){
+				$("#subTabID").val(result.id);
+			};
+
+			function reloadCalendar(){
+				var arriving = $("[id$='arrivingInp']").val();
+				var departing = $("[id$='departingInp']").val();
+				if(arriving != "" && departing != ""){
+					$("#calendar1_arriving_input").val(formatDateStringForUI(arriving));
+					$("#calendar1_departing_input").val(formatDateStringForUI(departing));
+				}
+			}
+
+			function setSearchTabLabel(){
+				var label = 'Search - ';
+				var poi = sanitizeInputText($("[id$='searchTextInp']").val());
+				var propCode = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				if(poi != ""){
+					label += '"'+poi+'"';
+				}
+				else{
+					label += '"'+propCode+'"';
+				}
+				sforce.console.setTabTitle(label);
+			}
+
+			function showAvailableRadios() {
+				if($("[id$='departingInp']").val() && $("[id$='arrivingInp']").val()) {
+					$('#availableRadioButtonPanel').show();
+				}
+			}
+
+			function focusPropertyMap(event, propCode){
+				propertyMap.showResult(propCode);
+				event.stopPropagation();
+				event.preventDefault();
+			}
+
+			function addDates() {
+				$('#setDatesDiv').addClass('hide-panel');
+				$('#beforeDatesPanel').addClass('hide-panel');
+				$('#afterDatesPanel').removeClass('hide-panel');
+			}
+
+			function toggleDatesPanel(){
+				$('#setDatesDiv').toggleClass('hide-panel');
+			}
+
+			function setInitialDates(){
+				var arrivingText = $(".arrivingDisplay").text().trim();
+				var departingText = $(".departingDisplay").text().trim();
+				$("#calendar2_arriving_input").val(arrivingText);
+				$("#calendar2_departing_input").val(departingText);
+			}
+
+			function toggleSRPSearchLinkPanel(){
+				var propCode = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				var showPanel = (propCode != "");
+				$("[id$='srpCodesInp']").val('');
+				$("[id$='srpNamesInp']").val('');
+				$("#srpSearchLinkPanel").toggleClass("slds-hide",(!showPanel));
+				$("#srpSearchInfoPanel").addClass("slds-hide");
+			}
+
+			function populateSRPSearchInfoPanel(){
+				$("#srpInfoList").empty();
+				var srpCodesCSV =$("[id$='srpNamesInp']").val();
+				var srpList = srpCodesCSV.split(',');
+				var srpItems = [];
+				for(var srpInd = 0; srpInd < srpList.length; srpInd++){
+					if(srpList[srpInd] != ''){
+						srpItems.push(srpList[srpInd]);
+					}
+				}
+				$("#srpInfoList").html(srpItems.join("<br/>"));
+			}
+
+			function validateBeforeSRPSearch(){
+				var arriving = $("#calendar1_arriving_input").val();
+				var departing = $("#calendar1_departing_input").val();
+				if(arriving != "" && departing != ""){
+					validatePropertyCodeAndOpenSRP();
+				}
+				else{
+					showErrorMsg("Please enter dates to find special rate plans");
+				}
+			}
+
+			function openSRPSearch(hasError){
+				if(!hasError){
+					formatSearchInput();
+					setSearchInputs();
+					setSearchTabLabel();
+					let opt = {
+						propertyCode: $("[id$='searchPropCodeInp']").val(),
+						arriving: $("[id$='arrivingInp']").val(),
+						departing: $("[id$='departingInp']").val(),
+						rooms: $("[id$='numRoomsSearchInp']").val(),
+						adults: $("[id$='numAdultsSearchInp']").val(),
+						children: $("[id$='numChildSearchInp']").val(),
+						promoCode: "",
+						srpCodesCSV:$("[id$='srpCodesInp']").val(),
+						srpNamesCSV:$("[id$='srpNamesInp']").val(),
+						tier: $("[id$='tierInp']").val(),
+						currencyCode: "",
+						smoking: false,
+						adaAccessible: false,
+						srpCodesJSON: $("[id$='srpCodesJSONInp']").val(),
+						corpId: $("[id$='book_clientId']").val(),
+						corpName: $("[id$='book_clientName']").val(),
+						travelAgentId: $("[id$='book_travelAgent']").val()
+					}
+					SRPLookupComponent.showSRPModal(opt);
+				}
+			}
+
+			function changeSRPApplied(){
+				$("[id$='srpCodesInp']").val("");
+				$("[id$='srpNamesInp']").val("");
+				openSRPSearch(false);
+			}
+
+			function onCloseSRP(){
+				var srpCodes = SRPLookupComponent.getSelectedSRPCodes();
+				var srpNames = SRPLookupComponent.getSelectedSRPNames();
+				var clientInfo = SRPLookupComponent.getAppliedClient();
+				var srpInfoString = SRPLookupComponent.getSelectedSRPInfoJSONString();
+				var travelAgent = SRPLookupComponent.getSelectedTravelAgent();
+				$("[id$='srpCodesJSONInp']").val(srpInfoString);
+				$("[id$='book_clientId']").val(clientInfo.corpCode);
+				$("[id$='book_clientName']").val(clientInfo.corpName);
+				$("[id$='book_travelAgent']").val(travelAgent.clientId);
+				$("[id$='srpCodesInp']").val(srpCodes);
+				$("[id$=':corpCodesInp']").val(clientInfo.corpCode);
+				$("[id$='srpNamesInp']").val(srpNames);
+				populateSRPSearchInfoPanel();
+				var showInfoPanel = (srpNames.trim() != "");
+				$("#srpSearchInfoPanel").toggleClass("slds-hide", !showInfoPanel);
+				$("#srpSearchLinkPanel").toggleClass("slds-hide", showInfoPanel);
+			}
+
+			function keypressEnterHandler(e, methodRef){
+				if(e.keyCode === 13){
+					methodRef();
+				}
+			}
+
+			function submitPropertySearch(){
+				var srpCodes = $("[id$='srpCodesInp']").val();
+				var travelAgentId = $("[id$='book_travelAgent']").val();
+				var arriving = $("#calendar1_arriving_input").val();
+				var departing = $("#calendar1_departing_input").val();
+				var propCode = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				if(arriving != "" && departing != "" && propCode !="" && (srpCodes != "" || travelAgentId != "")){
+					autoSelectProperty();
+				}
+				else{
+					onSubmitPropertySearch();
+				}
+			}
+
+			function onSubmitPropertySearch(){
+				formatSearchInput();
+				setSearchInputs();
+				if(validateSearchInput()) {
+					setErrorLocation("#resultsErrMsg");
+					mapSearchDetails();
+					showPropertyResults();
+					setSearchTabLabel();
+					submitSearch();
+				}
+			}
+
+			function showPropertyResults(){
+				$('#searchDiv').hide();
+				$('#resultsDiv').removeClass('slds-hide');
+			}
+
+			function mapSearchDetails(){
+				var searchText = $("#searchPOIInp1").val();
+				var arriving = $("#calendar1_arriving_input").val();
+				var departing = $("#calendar1_departing_input").val();
+				var numNights = '0';
+				var numAdults = NumRoomComponent.getTotalAdults();;
+				var numChildren = NumRoomComponent.getTotalChildren();
+				var numRooms = $("[id$='numRoomsMainInp']").val();
+
+				if(arriving != "" && departing != ""){
+					var arrivingMoment = moment(arriving, 'dddd MMM D, YYYY');
+					var departingMoment = moment(departing, 'dddd MMM D, YYYY');
+					numNights = departingMoment.diff(arrivingMoment,'days');
+					$('#beforeDatesPanel').addClass('slds-hide');
+					$('#afterDatesPanel').removeClass('slds-hide');
+				}
+
+				$(".numRoomsDisplay").text(numRooms);
+				$("#searchPOIInp2").val(searchText);
+				$(".arrivingDisplay").text(arriving);
+				$(".departingDisplay").text(departing);
+				$(".numNightsDisplay").text(numNights);
+				$(".adultsDisplay").text(numAdults + " adults");
+				$(".childrenDisplay").text(numChildren + " children");
+			}
+
+			function setSearchInputs(){
+				var searchText = $("#searchPOIInp1").val();
+				var numRooms = NumRoomComponent.getNumRooms();
+				$("[id$='numRoomsSearchInp']").val(numRooms);
+				$("#numRoomsMainInp").val(numRooms);
+				var roomOccupancy = NumRoomComponent.getSearchRoomOccupancy();
+				var numAdults = roomOccupancy.numAdults;
+				var numChildren = roomOccupancy.numChildren;
+				var distanceUnit = $("[name='distUnit']:checked").val();
+				var guestTier = guestInfoUtility.guestInfo.guestTier;//(typeof GuestBar_Details != 'undefined' && typeof GuestBar_Details.guestTier != 'undefined')?GuestBar_Details.guestTier:"";
+				$("[id$='tierInp']").val(guestTier);
+				$("[id$='searchTextInp']").val(searchText);
+				$("[id$='distUnitInp']").val(distanceUnit);
+				$("[id$='numAdultsSearchInp']").val(numAdults);
+				$("[id$='numChildSearchInp']").val(numChildren);
+			}
+
+			function validateSearchInput(){
+				var locationInput = $("[id$='searchPOIInp1']");
+				var poi = sanitizeInputText($("[id$='searchTextInp']").val());
+				var propCode = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				var poiLat = sanitizeInputText($("[id$='latInp']").val());
+				var poiLng = sanitizeInputText($("[id$='lngInp']").val());
+				console.log('poi => ' + poi + ' ' + poiLat + ',' + poiLng + '. propCode = ' + propCode);
+
+				if(poi == "" && propCode == ""){
+					locationInput.focus();
+					showErrorMsg("We can't quite search yet. Try giving us a location ");
+					return false;
+				}
+				if (poi && !(poiLat && poiLng)) {
+					locationInput.focus();
+					showErrorMsg("Not a valid location: " + poi);
+					return false;
+				}
+				return true;
+			}
+
+			function formatSearchInput(){
+				var userFormatDepartingDate = $("#calendar1_departing_input").val();
+				var userFormatArrivingDate = $("#calendar1_arriving_input").val();
+				if(userFormatDepartingDate != "" && userFormatArrivingDate != ""){
+					$("[id$='departingInp']").val(formatDateString(userFormatDepartingDate));
+					$("[id$='arrivingInp']").val(formatDateString(userFormatArrivingDate));
+					$("#arrivingUIFormatInp").val(userFormatArrivingDate);
+					$("#departingUIFormatInp").val(userFormatDepartingDate);
+				}
+				else{
+					$("#arrivingUIFormatInp").val("");
+					$("#departingUIFormatInp").val("");
+				}
+			}
+
+			function setCurrentNights(){
+				let numNights = getCurrentNights();
+				if(numNights){
+					$("#currentNights").html("This stay is <b>"+numNights+"</b> night(s)");
+				} else {
+					$("#currentNights").html("");
+				}
+			}
+
+			function getCurrentNights() {
+				var userFormatDepartingDate = $("#calendar1_departing_input").val();
+				var userFormatArrivingDate = $("#calendar1_arriving_input").val();
+
+				if(userFormatDepartingDate != "" && userFormatArrivingDate != ""){
+					var arrivingMoment = moment(userFormatArrivingDate, 'dddd MMM D, YYYY');
+					var departingMoment = moment(userFormatDepartingDate, 'dddd MMM D, YYYY');
+					var numNights = departingMoment.diff(arrivingMoment,'days');
+					return numNights;
+				}
+				return 0;
+			}
+
+			//filter methods for property search results
+			function submitFilters(){
+				formatFilterSearchInput();
+				setFilterSearchInputs();
+				if(validateSearchInput()) {
+					setErrorLocation("#resultsErrMsg");
+					mapFilterDetails();
+					setSearchTabLabel();
+					initiateNewSearchAction();
+				}
+			}
+
+			function formatFilterSearchInput(){
+				var userFormatDepartingDate = $("#calendar2_departing_input").val();
+				var userFormatArrivingDate = $("#calendar2_arriving_input").val();
+				if(userFormatDepartingDate != "" && userFormatArrivingDate != ""){
+					$("[id$='departingInp']").val(formatDateString(userFormatDepartingDate));
+					$("[id$='arrivingInp']").val(formatDateString(userFormatArrivingDate));
+					$("#arrivingUIFormatInp").val(userFormatArrivingDate);
+					$("#departingUIFormatInp").val(userFormatDepartingDate);
+				}
+			}
+
+			function setFilterSearchInputs(){
+				var searchText = $("#searchPOIInp2").val();
+				var brands = [];
+				$("input[name='inputBrand']:checked").each(function () {
+					var addBrands = $(this).val();
+					var addBrandsList = addBrands.split("_");
+					$(addBrandsList).each(function () {
+						brands.push(this);
+					});
+				});
+
+				var amenities = [];
+				$("input[name='inputAmenity']:checked").each(function () {
+
+					amenities.push($(this).val());
+				});
+				var ratePlans = [];
+				$("input[name='ratePlans']:checked").each(function () {
+					ratePlans.push($(this).val());
+				});
+
+				var distanceUnit = $("[name='distUnit']:checked").val();
+				var srpCodes = $("#inputSRPCode").val().trim();
+				var corpCodes = $("#inputCorpCode").val().trim();
+				var currencyCode = getSelectedCurrency();
+				var sortByField = $("#sel-Sort").val().trim();
+				var searchRadius = $("#distance-slider__value").text();
+				console.log('search radius: ' + searchRadius);
+				var showAvailable = $("input[name='propRadio'][value='AVAILABLE']:checked").prop("checked");
+				var guestTier = guestInfoUtility.guestInfo.guestTier;//(typeof GuestBar_Details != 'undefined' && typeof GuestBar_Details.guestTier != 'undefined')?GuestBar_Details.guestTier:"";
+				var numRooms = NumRoomModalComponent.getNumRooms();
+				var roomOccupancy = NumRoomModalComponent.getSearchRoomOccupancy();
+				var numAdults = roomOccupancy.numAdults;
+				var numChildren = roomOccupancy.numChildren;
+
+				$("[id$='tierInp']").val(guestTier);
+				$("[id$='distUnitInp']").val(distanceUnit);
+				$("[id$='srpCodesInp']").val(srpCodes);
+				$("[id$='corpCodesInp']").val(corpCodes);
+				$("[id$='book_corpCodes']").val(corpCodes);
+				$("[id$='ratePlansInp']").val(ratePlans.join());
+				$("[id$='brandsInp']").val(brands.join());
+				$("[id$='amenitiesInp']").val(amenities.join());
+				$("[id$='currencyCodeInp']").val(currencyCode);
+				$("[id$='sortByFieldInp']").val(sortByField);
+				$("[id$='radiusInp']").val(searchRadius);
+				$("[id$='showAvailableInp']").val(showAvailable);
+				$("[id$='searchTextInp']").val(searchText);
+				$("[id$='numRoomsSearchInp']").val(numRooms);
+				$("#numRoomsMainInp").val(numRooms);
+				$("[id$='numAdultsSearchInp']").val(numAdults);
+				$("[id$='numChildSearchInp']").val(numChildren);
+				if(searchText != ""){
+					$("[id$='searchPropCodeInp']").val('');
+				}
+			}
+
+			function getSelectedCurrency() {
+				let currencySelect = $("#sel-Currency");
+				if (currencySelect.prop('selectedIndex') === 0) {
+					return '';
+				} else {
+					return currencySelect.val().trim();
+				}
+			}
+
+			function mapFilterDetails(){
+				var numAdults = NumRoomModalComponent.getTotalAdults();
+				var numChildren = NumRoomModalComponent.getTotalChildren();
+				var arriving = $("[id$='arrivingInp']").val();
+				var departing = $("[id$='departingInp']").val();
+				var numRooms = $("#numRoomsMainInp").val();
+				var numNights = '0';
+
+				if(arriving != "" && departing != ""){
+					var arrivingMoment = moment(arriving, 'YYYY-MM-DD');
+					var departingMoment = moment(departing, 'YYYY-MM-DD');
+					numNights = departingMoment.diff(arrivingMoment,'days');
+					$('#beforeDatesPanel').addClass('slds-hide');
+					$('#afterDatesPanel').removeClass('slds-hide');
+				}
+
+				$(".arrivingDisplay").text(moment(arriving).format('ddd MMM D, YYYY'));
+				$(".departingDisplay").text(moment(departing).format('ddd MMM D, YYYY'));
+				$(".numNightsDisplay").text(numNights);
+				$(".numRoomsDisplay").text(numRooms);
+				$(".adultsDisplay").text(numAdults + " adults");
+				$(".childrenDisplay").text(numChildren + " children");
+			}
+
+			function showFilterNumRoomsModal(){
+				$("#changeRoomsFilterModal").removeClass('slds-hide').addClass('slds-show');
+			}
+
+			function hideFilterNumRoomsModal(){
+				$("#changeRoomsFilterModal").removeClass('slds-show').addClass('slds-hide');
+				submitFilters();
+			}
+
+			function buildReservationParameterObject() {
+				var ratePlans = [];
+				$("input[name='ratePlans']:checked").each(function () {
+				ratePlans.push($(this).val());
+				});
+				var parameterObj = {};
+				parameterObj.Arrival = $("#arrivingUIFormatInp").val();
+				parameterObj.Departing = $("#departingUIFormatInp").val();
+				parameterObj.ArrivalStandardFormat=$("[id$='arrivingInp']").val();
+				parameterObj.DepartingStandardFormat=$("[id$='departingInp']").val();
+				parameterObj.NumberOfRooms = $("#numRoomsMainInp").val();
+				parameterObj.NumberOfAdults = $("[id$='numAdultsSearchInp']").val();
+				parameterObj.NumberOfChildren = $("[id$='numChildSearchInp']").val();
+				parameterObj.SRPCodes = $("[id$='srpCodesInp']").val();
+				parameterObj.CorpCodes = $("[id$='corpCodesInp']").val();
+				parameterObj.PromoCode = "";
+				parameterObj.AARP = $("#inputAARPRate").prop('checked');
+				parameterObj.AAA = $("#inputAAARate").prop('checked');
+				parameterObj.Senior = $("#inputSeniorRate").prop('checked');
+				parameterObj.Government = $("#inputGovMilRate").prop('checked');
+				parameterObj.RateTokens = ratePlans;
+				parameterObj.CurrencyCode = $("[id$='currencyCodeInp']").val();
+				return parameterObj;
+			}
+
+			function openPropertyDetails(propertyId, propertyCode, propertyName,searchProp,searchText,searchLat,searchLong, distanceUnit, startTab, focused) {
+				sforce.console.getEnclosingPrimaryTabId(function (primTabResult) {
+					var selectedGuestId =guestInfoUtility.guestInfo.guestId;//(typeof GuestBar_Details != 'undefined' && GuestBar_Details.guestId != 0)?GuestBar_Details.guestId:"";//$("#selectedGuestId").val();
+					var poiParams = "";
+					if(searchText != "" && searchLat != "" && searchLong != ""){
+						poiParams = "&POI="+searchText+"&POILat="+searchLat+"&POILng="+searchLong+"&POIUnit="+distanceUnit;
+						console.log(poiParams);
+					}
+					else if(searchProp != ""){
+						poiParams = "&POIPropId="+searchProp + "&POIUnit="+distanceUnit;
+					}
+					var propURL = "/apex/PropertyDetails?caseId={!currentCaseId}&propId=" + propertyId + "&propCode=" + propertyCode + "&guest=" + selectedGuestId +poiParams + "&startTab=" + startTab;
+					sforce.console.openSubtab(primTabResult.id, propURL, focused, "Info - "+propertyName, '', function (subtabResult) {
+						console.dir(subtabResult)
+					}, "Info"+propertyName);
+				});
+			}
+
+			function compareSelectedProperties() {
+				var searchText = sanitizeInputText($("[id$='searchTextInp']").val());
+				var searchProp = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				var searchLat = sanitizeInputText($("[id$='latInp']").val());
+				var searchLong = sanitizeInputText($("[id$='lngInp']").val());
+				var distanceUnit = $("[name='distUnit']:checked").val();
+				$(".selectedProperty").each(function (index) {
+					var propId = $(this).data("prop-id");
+					var propCode = $(this).data("prop-code");
+					var propName = $(this).data("prop-name");
+					openPropertyDetails(propId, propCode, propName, searchProp,searchText,searchLat,searchLong, distanceUnit, '', index == 0);
+				});
+			}
+
+			function selectProperty(selectedProperty){
+				$(selectedProperty).addClass("selectedProperty");
+				var slots = $(".inactivePropSelection");
+				if(slots.length == 4) {
+					$('#badgeSelected').show();
+					$('#noBadgeSelected').hide();
+				}
+				if(slots.length > 0){
+					var firstAvailableSlot = $(slots[0]);
+					var propCode = $(selectedProperty).data("prop-code");
+					firstAvailableSlot.addClass("activePropSelection").removeClass("inactivePropSelection");
+					firstAvailableSlot.data("prop-code", propCode);
+					firstAvailableSlot.prop("id", "slot_"+propCode);
+					firstAvailableSlot.text(propCode);
+					firstAvailableSlot.on("click",function(){deselectProperty(propCode);});
+				}
+			}
+
+			function deselectProperty(selectedPropertyCode){
+				var propertyItemSelector = "#property-result-"+selectedPropertyCode;
+				var propertySlotSelector = "#slot_"+selectedPropertyCode;
+				$(propertyItemSelector).removeClass("selectedProperty");
+				var selectedSlot = $(propertySlotSelector);
+				selectedSlot.remove();
+				$('#badgeSelected').append("<span class='slds-badge inactivePropSelection'></span>");
+				var slots = $(".inactivePropSelection");
+				if(slots.length == 4) {
+					$('#badgeSelected').hide();
+					$('#noBadgeSelected').show();
+				}
+			}
+
+			function clearPropertySelections(){
+				$(".activePropSelection").each(function(){
+					$(this).remove();
+					$("#compareProperties_Button").before("<span class='slds-badge inactivePropSelection'></span>");
+				});
+				$(".selectedProperty").removeClass("selectedProperty");
+				$("#compareProperties_Button").prop("disabled", true);
+			}
+
+			function validatePropertySelectionMax(){
+				var selectionSlotsLeft = $(".inactivePropSelection").length;
+				var validationPassed = true;
+				if (selectionSlotsLeft == 0) {
+					validationPassed = false;
+				}
+				return validationPassed;
+			}
+			function enableDisableCompareButton(){
+				var selectedSize = $(".activePropSelection").length;
+				var disableCompare = (selectedSize < 2);
+				$("#compareProperties_Button").prop("disabled", disableCompare);
+			}
+
+			function reloadFilterInputs(){
+
+				var searchText = $("[id$='searchTextInp']").val();
+				var brands = $("[id$='brandsInp']").val().split(',');
+				var amenities = $("[id$='amenitiesInp']").val().split(',');
+				var ratePlans = $("[id$='ratePlansInp']").val().split(',');
+				var srpCodes = $("[id$='srpCodesInp']").val();
+				var corpCodes = $("[id$='corpCodesInp']").val();
+				var currencyCode = $("[id$='currencyCodeInp']").val();
+				var sortBy = $("[id$='sortByFieldInp']").val();
+				var distanceUnit = $("[id$='distUnitInp']").val();
+				var distanceUnitSelector = "input[name='distUnit'][value='"+distanceUnit+"']";
+				var searchRadius = $("[id$='radiusInp']").val();
+				var showAvailable = $("[id$='showAvailableInp']").val()=="true";
+				$.each(brands, function(brandIndex,brandValue){
+					$("input[name='inputBrand']").each(function () {
+						var addBrands = $(this).val();
+						var addBrandsList = addBrands.split("_");
+						for(var b=0; b< addBrandsList.length; b++){
+							if(addBrandsList[b] === brandValue){
+								$(this).prop("checked",true);
+							}
+						}
+					});
+				});
+
+				$.each(amenities,function(amenityIndex,amenityValue){
+					var amenitySelector = "input[name='inputAmenity'][value='"+amenityValue+"']";
+					$(amenitySelector).prop("checked",true);
+				});
+
+				$.each(ratePlans,function(ratePlanIndex,ratePlanValue){
+					var ratePlanSelector = "input[name='ratePlans'][value='"+ratePlanValue+"']";
+					$(ratePlanSelector).prop("checked",true);
+				});
+				 showAvailableRadios();
+
+				$("#searchPOIInp2").val(searchText);
+				$("#inputSRPCode").val(srpCodes);
+				$("#inputCorpCode").val(corpCodes);
+				if(currencyCode != null && currencyCode != "")
+					$("#sel-Currency").val(currencyCode);
+				if(sortBy != null && sortBy != "")
+					$("#sel-Sort").val(sortBy);
+				$("#distance-slider__value").text(searchRadius);
+				$("#distance-slider").val(searchRadius);
+				$(distanceUnitSelector).prop("checked",true);
+				$("input[name='propRadio'][value='AVAILABLE']").prop("checked",showAvailable);
+			}
+
+			var propertyClickHandler = function (callingEvent) {
+				var currentlySelected = $(this).prop('checked');
+				if(currentlySelected && validatePropertySelectionMax()){
+					selectProperty($(this).closest('.propertyItem'));
+					enableDisableCompareButton();
+				}
+				else {
+					$(this).prop('checked', false);
+				}
+				if(!currentlySelected){
+					var selectedPropertyCode = $(this).closest('.propertyItem').data("prop-code");
+					deselectProperty(selectedPropertyCode);
+					enableDisableCompareButton();
+				}
+			};
+
+			var unavailablePropOpenHandler = function(callingEvent){
+				var searchText = sanitizeInputText($("[id$='searchTextInp']").val());
+				var searchProp = sanitizeInputText($("[id$='searchPropCodeInp']").val());
+				var searchLat = sanitizeInputText($("[id$='latInp']").val());
+				var searchLong = sanitizeInputText($("[id$='lngInp']").val());
+				var distanceUnit = $("[name='distUnit']:checked").val();
+				var propId = $(this).closest('.propertyItem').data("prop-id");
+				var propCode = $(this).closest('.propertyItem').data("prop-code");
+				var propName = $(this).closest('.propertyItem').data("prop-name");
+				var startTab = '';
+				if($(this).data("start-tab") != undefined) startTab = $(this).data("start-tab");
+				openPropertyDetails(propId, propCode, propName, searchProp,searchText,searchLat,searchLong, distanceUnit, startTab, true);
+			};
+
+			var availablePropOpenHandler = function(propCode){
+				var propId = $(this).closest('.availableProp').data("prop-id");
+				var propCode = $(this).closest('.availableProp').data("prop-code");
+				var brandCode = $(this).closest('.availableProp').data("brand-code");
+				var crsFlag = $(this).closest('.availableProp').data("crs-flag");
+				var propName = $(this).closest('.availableProp').data("prop-name");
+				$("[id$='book_propCode']").val(propCode);
+				$("[id$='book_brandCode']").val(brandCode);
+				$("[id$='book_crsFlag']").val(crsFlag);
+				chooseProperty(propCode);
+			};
+
+			function sanitizeInputText(inputTextValue){
+				if(inputTextValue == undefined || inputTextValue == null){
+					return "";
+				}
+				return inputTextValue;
+			}
+
+			function formatDateString(dateString) {
+				if (dateString != "") {
+					var dateObj = moment(dateString, 'dddd MMM D, YYYY');
+					console.log(moment(dateObj).format('YYYY-MM-DD'));
+					return moment(dateObj).format('YYYY-MM-DD');
+				}
+				return dateString;
+			}
+
+			function formatDateStringForUI(dateString) {
+				if (dateString != "") {
+					var dateObj = moment(dateString, 'YYYY-MM-DD');
+					return moment(dateObj).format('dddd MMM D, YYYY');
+				}
+				return dateString;
+			}
+
+			function setErrorLocation(errorLocationSelector){
+				clearErrorMsg();
+				$(errorLocationSelector).addClass("currentErrMsgLocation");
+			}
+
+			function clearErrorMsg(){
+				$(".currentErrMsgLocation").html('');
+				$(".currentErrMsgLocation").removeClass("currentErrMsgLocation");
+			}
+			function showErrorMsg(msg){
+				$(".currentErrMsgLocation").html(msg)
+			}
+			function showErrorMessages(messages){
+				var errorMessagesHTML = messages.join("<br/>");
+				showErrorMsg(errorMessagesHTML);
+			}
+
+			function showErrorAlert(msg){
+				$("#errorAlertText").html("");
+				$("#errorAlertBanner").removeClass("hide-panel");
+				$("#errorAlertText").html(msg);
+			}
+
+			function hideErrorAlert(){
+				$("#errorAlertBanner").addClass("hide-panel");
+			}
+
+			function loadErrorsFound(){
+				hideErrorAlert();
+				var hasErrorMsg = $("#hidHasErrorMsgPayment").val();
+				var errorMsgJSON = $("#hidErrorMsgPayment").val();
+				if (hasErrorMsg === "true") {
+					console.log(errorMsgJSON);
+					var errorMsgList = JSON.parse(errorMsgJSON);
+					var errorMsgText = errorMsgList.join('<br/>');
+					showErrorAlert(errorMsgText);
+				}
+			}
+
+			function togglePointsAndMoney(btn) {
+				var newRedemptionType = $(btn).data('redemption-type');
+				var hiddenRedemptionType = $('[id$="redemptionTypeInp"]');
+				if (newRedemptionType != hiddenRedemptionType.val()) {
+					hiddenRedemptionType.val(newRedemptionType);
+					submitFilters();
+				}
+			}
+
+			/*Methods for remote property search*/
+			function initiateNewSearchAction(){
+				Property_Search.reset();
+				$("#showMoreResultsBtn").prop("disabled",true);
+				var brandCSV = $("input[id$='brandsInp']").val();
+				var amenitiesCSV = $("input[id$='amenitiesInp']").val();
+				var ratePlansCSV = $("input[id$='ratePlansInp']").val();
+				Property_Search.args.caseId = '{!currentCaseId}';
+				Property_Search.args.rooms = defaultIfUnavailable($("input[id$='numRoomsSearchInp']").val(), null);
+				Property_Search.args.adults = defaultIfUnavailable($("input[id$='numAdultsSearchInp']").val(), null);
+				Property_Search.args.children = defaultIfUnavailable($("input[id$='numChildSearchInp']").val(), null);
+				Property_Search.args.distanceUnit = defaultIfUnavailable($("input[id$='distUnitInp']").val(), null);
+				Property_Search.args.searchRadius = defaultIfUnavailable($("input[id$='radiusInp']").val(), null);
+				Property_Search.args.brandsCSV = defaultIfUnavailable($("input[id$='brandsInp']").val(), null);
+				Property_Search.args.brands =  convertCSVToListFilterBlanks(brandCSV);
+				Property_Search.args.ratePlansCSV = defaultIfUnavailable($("input[id$='ratePlansInp']").val(), null);
+				Property_Search.args.ratePlans = convertCSVToListFilterBlanks(ratePlansCSV);
+				Property_Search.args.amenitiesCSV = defaultIfUnavailable($("input[id$='amenitiesInp']").val(), null);
+				Property_Search.args.amenities = convertCSVToListFilterBlanks(amenitiesCSV);
+				Property_Search.args.searchText = defaultIfUnavailable($("input[id$='searchTextInp']").val(), null);
+				Property_Search.args.searchLat = defaultIfUnavailable($("input[id$='latInp']").val(), null);
+				Property_Search.args.searchLong = defaultIfUnavailable($("input[id$='lngInp']").val(), null);
+				Property_Search.args.departing = defaultIfUnavailable($("input[id$='departingInp']").val(), null);
+				Property_Search.args.arriving = defaultIfUnavailable($("input[id$='arrivingInp']").val(), null);
+				Property_Search.args.currencyCode = defaultIfUnavailable($("input[id$='currencyCodeInp']").val(), null);
+				Property_Search.args.tier = defaultIfUnavailable($("input[id$='tierInp']").val(), null);
+				Property_Search.args.redemptionType = defaultIfUnavailable($("input[id$='redemptionTypeInp']").val(), null);
+				Property_Search.args.viewFilter = ($("[id$='showAvailableInp']").val()=="true" ? 'available' : 'all');
+				Property_Search.args.searchPropCode = defaultIfUnavailable($("[id$='searchPropCodeInp']").val(), null);
+				Property_Search.resultCallback = resultsCallback;
+				Property_Search.errorCallback = function showPropertySearchError(){
+					if(Property_Search.errors.length > 0){
+						showErrorAlert(Property_Search.errors.join("<br/>"));
+					}
+					$('#search-spinner').addClass('hide-panel');
+				};
+				Property_Search.noResultsCallback = function noResultsFound (){
+					$("[id$='propertySearchResults']").html("");
+					$("#resultSize,#resultSize2").text("0");
+					$('#search-spinner').addClass('hide-panel');
+				};
+				Property_Search.clearErrorsCallback = function clearPreviousErrors(){
+					hideErrorAlert();
+				};
+				showMorePropertySearchResults();
+			}
+
+			function showMorePropertySearchResults(){
+				$('#search-spinner').removeClass('hide-panel');
+				Property_Search.findMore({!$Label.ICJ_PropertySearchPageSize});
+			}
+
+			function resultsCallback(){
+				$("[id$='propertySearchResults']").html("");
+				var sortType = defaultIfUnavailable($("#sel-Sort").val(),"DIST");
+				var displayProperties = Property_Search.getDisplayProperties(sortType);
+				initializeGoogleMapBasedOnSearch();
+				displayProperties.forEach(function(prop){
+					var propCard = createPropertyResult(prop);
+					if (!isUsingAccessibilityMode) {
+						propertyMap.addProperty(prop.PropertyId, prop.PropertyCode, prop.BrandCode, prop.PropertyName, prop.AddressLine, prop.Latitude, prop.Longitude, prop.Available);
+					}
+					$("[id$='propertySearchResults']").append(propCard);
+				});
+
+				$("input[id$='initialSearchRunInp']").val(true);
+				if(Property_Search.hasMoreResults || Property_Search.filteredResults.length > Property_Search.resultsToShow){
+					$("[id$='propertySearchResults']").append('<button id="showMoreResultsBtn" class="slds-button slds-button_brand slds-size_1-of-1" style="margin-left: 12px;margin-right: 25px;margin-top: 10px;" onclick="showMorePropertySearchResults(); return false;">Show More</button>');
+				}
+				$("#resultSize,#resultSize2").text(Property_Search.totalResultSize);
+				clearPropertySelections();
+				showAvailableRadios();
+				$('#search-spinner').addClass('hide-panel');
+				$('#foundPropertiesIdSecondPage').focus();
+			}
+
+			function resortProperties(){
+				resultsCallback();
+			}
+
+			function filterCurrentResults(){
+				var showAvailable = $("input[name='propRadio'][value='AVAILABLE']:checked").prop("checked");
+				Property_Search.args.viewFilter = (showAvailable ? 'available' : 'all');
+				Property_Search.filterAvailability();
+				resultsCallback();
+			}
+
+			function initializeGoogleMapBasedOnSearch(){
+			    var mapElement = $('#propertyMap');
+			    if (!isUsingAccessibilityMode) {
+					if (mapElement.is(':hidden')) mapElement.show();
+
+					var poiLat = defaultIfUnavailable(Number(Property_Search.args.searchLat), 0.0);
+					var poiLng = defaultIfUnavailable(Number(Property_Search.args.searchLong), 0.0);
+					var resultPropCode = defaultIfUnavailable(Property_Search.args.searchPropCode, "");
+					if (resultPropCode != "" && Property_Search.filteredResults.length > 0) {
+						poiLat = defaultIfUnavailable(Property_Search.filteredResults[0].Latitude, 0.0);
+						poiLng = defaultIfUnavailable(Property_Search.filteredResults[0].Longitude, 0.0);
+					}
+
+					propertyMap.init({lat: poiLat, lng: poiLng});
+					propertyMap.caseId = "{!currentCaseId}";
+				} else {
+					if(mapElement.is(':visible')) mapElement.addClass('slds-hide');
+				}
+			}
+
+			function createPropertyResult(prop){
+				console.log('Prop',prop);
+				var propertyWrapper = '<div id="property-result-' + prop.PropertyCode + '" class="slds-size_1-of-3 slds-grid slds-m-horizontal_small slds-wrap propertyItem ' + (prop.Available ? 'availableProp' : 'unavailableProp') + '" style="margin-top:25px;width:30%;height:364px;background-color: #ffffff;border-radius: 4px;' + ((defaultIfUnavailable(Property_Search.args.searchPropCode,"")).toUpperCase() == prop.PropertyCode.toUpperCase() ? 'border: 1px solid #ffb75d;box-shadow: 0px 2px 2px rgba(255, 183, 93, 0.1);' : 'border: 1px solid #d8dde6;box-shadow: 0px 2px 2px rgba(0, 0, 10, 0.1);') + '" data-prop-id="' + prop.PropertyId + '" data-prop-code="' + prop.PropertyCode +  '" data-crs-flag="' + prop.CRSFlag + '" data-prop-name="' + prop.PropertyName + '" data-brand-code="'+prop.BrandCode+'">';
+
+				var propertyHeader = '<div style="position:relative;left:14px;top:-10px;background-color:transparent;"> <div style="background-color:transparent;text-decoration: underline;' + ((defaultIfUnavailable(Property_Search.args.searchPropCode,"")).toUpperCase() == prop.PropertyCode.toUpperCase() ? 'margin-right:144px;': 'margin-right:155px;') + '" class="' + (Property_Search.datesSelected()?'slds-hide':'') + '"></div><div style="background-color:white;' + ((defaultIfUnavailable(Property_Search.args.searchPropCode,"")).toUpperCase() == prop.PropertyCode.toUpperCase() ? 'margin-right:77px;' : 'margin-right:90px;') + 'color:#37a447;" tabindex="0">' + (prop.Available ? 'AVAILABLE' : '') + '</div><div style="background-color:white;'+((defaultIfUnavailable(Property_Search.args.searchPropCode,"")).toUpperCase() == prop.PropertyCode.toUpperCase() ? 'margin-right:55px;' : 'margin-right:68px;')+'color:#c23934;font-weight:600;">' + (!prop.Available && Property_Search.datesSelected() ? 'UNAVAILABLE' : '') + '</div></div>';
+
+				var propertyBadge = '';
+				if((defaultIfUnavailable(Property_Search.args.searchPropCode,"")).toUpperCase() == prop.PropertyCode.toUpperCase()){
+					propertyBadge = '<div class="slds-badge" style="background-color:#ffb75d;position:relative;left:10px;top:-10px;">Match: ' + prop.PropertyCode + '</div>';
+				}
+				else{
+					propertyBadge = '<div class="slds-badge" style="position:relative;left:40px;top:-10px;">' + prop.PropertyCode + '</div>';
+				}
+
+				var propertyTitle = '<div class="slds-size_1-of-1 slds-grid" style="margin-left:15px;margin-right:15px;margin-top:-14px;"><div class="slds-size_4-of-5" style="text-align:left;font-weight:bold;" tabindex="0"><span style="cursor:pointer;">'+ prop.PropertyName + '</span></div><div class="slds-size_1-of-5" style="margin-top:5px;"><span class="slds-icon_container"><img src="'+ prop.BrandImageUrl + '" aria-hidden="true" alt="' + prop.BrandLabel + '" class="icon-brand"/></span></div></div>';
+
+				var propertyContact = '<div class="slds-size_1-of-1" style="text-align:left;margin-left:15px;margin-right:15px;" tabindex="0"><div style="font-size:.67rem;" onclick="focusPropertyMap(event,\''+ prop.PropertyCode + '\');"><span class="slds-icon_container" title=""><svg aria-hidden="true" class="slds-icon slds-icon_x-small icon-location"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/resource/hlt_assets/img/salesforce_icons/utility-sprite/svg/symbols.svg#checkin"></use></svg></span>'	+ (defaultIfUnavailable(prop.DistanceFromPOI, 0)).toFixed(2) + ' ' + Property_Search.args.distanceUnit +' ' + prop.BearingFromPOI + '</div><div onclick="focusPropertyMap(event,\''	+ prop.PropertyCode + '\');">';
+				if (prop.AddressLine != undefined)
+					propertyContact +=  defaultIfUnavailable(prop.AddressLine,'') + ',&nbsp;';
+
+				if (prop.City != undefined)
+					propertyContact += defaultIfUnavailable(prop.City,'') + ',&nbsp;';
+
+				propertyContact += defaultIfUnavailable(prop.State,'') + '</div><div style="font-size:.67rem;">' + prop.PhoneNumber + '</div></div>';
+
+				var propertyDescription = '<div class="slds-size_1-of-1 slds-grid" style="margin-left:15px;margin-right:15px;">';
+				var propertyImage = '';
+				var propertyRatesInfo= '<div class="slds-size_1-of-2 slds-grid slds-wrap slds-grid_vertical-align-center" style="margin-left:10px;text-align:left;"><div class="slds-size_1-of-1 slds-grid slds-grid_vertical-align-start">';
+				if(prop.PropertyImageUrl != null && prop.PropertyImageUrl != ''){
+					propertyImage += '<div class="slds-size_1-of-2 slds-grid slds-grid_vertical-align-center" style="position:relative;width:85px;height:85px;"><img src="' + prop.PropertyImageUrl +'" al="" aria-hidden="true" class="slds-size_1-of-1"/></div>'
+				}
+				else{
+					propertyImage='<div class="slds-size_1-of-2 slds-grid slds-grid_vertical-align-center" style="width:85px;height:85px;"><img src="/resource/hlt_assets/img/NoPhotoAvailable.png" aria-hidden="true" alt="test" class="slds-size_1-of-1"/></div>';
+				}
+
+				if(Property_Search.datesSelected()){
+					propertyRatesInfo += '<div class="' + (prop.Available ? '' : 'slds-hide') + '">';
+					if(Property_Search.args.redemptionType == 'money'){
+						propertyRatesInfo += '<div>Avg/Night - From</div><span style="color:#37a447;font-size:1.2rem;">' + (prop.RateAmount ? prop.RateAmount.toFixed(2) : '') + '</span><span style="color:#37a447;"> ' + prop.CurrencyCode + '</span>';
+					}
+					else if(Property_Search.args.redemptionType == 'points'){
+						propertyRatesInfo += '<span>';
+						if (prop.SupportsPoints && prop.LowestPointsPerNight && prop.LowestPointsPerNight > 0) {
+							propertyRatesInfo += 'Avg/Night - From <span style="color:#37a447;font-size:1.2rem;">' + prop.LowestPointsPerNight + '</span> Points';
+						} else {
+							propertyRatesInfo += 'Redemption points unavailable';
+						}
+						propertyRatesInfo += '</span>';
+
+					}
+
+					propertyRatesInfo += '</div>';
+				}
+				else{
+					propertyRatesInfo += '<div onclick="toggleDatesPanel();" style="font-size:11px;cursor:pointer;">Set dates of stay for pricing</div><div style="height:47px;"></div>';
+				}
+
+				if(isUsingAccessibilityMode === false) {
+					propertyRatesInfo += '</div><div class="slds-size_1-of-1" style="padding-top:5px;"><span class="slds-checkbox"><input type="checkbox" class="prop-checkbox" name="compare" id="checkbox' + prop.PropertyId + '"/><label for="checkbox' + prop.PropertyId + '" class="slds-checkbox__label"><span class="slds-checkbox_faux" style="margin-right:5px;"></span><span class="slds-form-element__label slds-m-bottom_none" style="font-size:.7rem;">Compare</span></label></span></div></div>';
+				} else {
+					propertyRatesInfo += '</div><div class="slds-size_1-of-1"></div></div>';
+				}
+
+				propertyDescription += propertyImage;
+				propertyDescription += propertyRatesInfo;
+				propertyDescription += '</div>';
+
+				var propertyLowerSection = '<div class="slds-size_1-of-1 slds-grid slds-wrap slds-grid_align-center" style="margin-left:15px;margin-right:15px;">'
+				var propertyAmenitiesSection = '<div class="slds-size_1-of-1 slds-grid slds-wrap slds-grid_align-space" style="margin-bottom:18px;padding-left:5px;padding-right:5px;padding-top:5px;padding-bottom:10px;width:225px;height:57px;border:1px solid #d8dde6;border-radius:4px;background-color:#ffffff;">';
+				if(prop.Amenities != null && prop.Amenities.length > 0){
+					prop.Amenities.forEach(function(amenity){
+						propertyAmenitiesSection += '<div class="slds-size_1-of-11"><span class="slds-icon_container" title="' + amenity.AmenityLabel + '"><svg aria-hidden="true" class="slds-icon slds-icon_small icon-bar"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="' + amenity.AmenityImageUrl + '"></use></svg></span></div>';
+					});
+				}
+				propertyAmenitiesSection += '</div>';
+				var propertyDetailsLink = '<div class="slds-size_1-of-1 slds-grid slds-grid_align-center" style="position:relative;height:0px"><div style="position:absolute;top:-32px;background-color:white;color:#0070d2;font-size:12px;padding:5px 10px 5px 10px;"><a class="property-link-class" style="cursor:pointer;" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}" tabindex="0">More property details</a></div></div>';
+				var propertyBookSection = '';
+
+				if(prop.Available && Property_Search.datesSelected()){
+					propertyBookSection = '<div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center book-button" style="cursor:pointer;width:233px;height:32px;color:#0070d2;border: 1px solid #0070d2;border-radius: 4px;" tabindex="0" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}"><span>Book property (' + (prop.redemptionType == 'points' && prop.SupportsPoints ? 'Points' : prop.CurrencyCode) + ')</span></div>';
+				}
+				else if (!prop.Available && Property_Search.datesSelected()){
+					propertyBookSection = '<div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center" style="cursor:pointer;width:233px;height:32px;color:#0070d2;border: 1px solid #0070d2;border-radius: 4px;" tabindex="0" onkeydown="if(event.keyCode === 13 || event.keyCode === 32){this.click();}" onclick="goToFlexibleDates(\''+prop.PropertyCode+'\',\''+(prop.BrandCode)+'\',\''+prop.CRSFlag+'\')"><span>Check Flexible Dates</span></div>';
+				}
+				else if(!Property_Search.datesSelected()){
+					propertyBookSection = '<div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center" style="width:233px;height:32px;font-size:11px;" tabindex="0">SET DATES TO BOOK PROPERTY</div>';
+				}
+				propertyLowerSection += propertyAmenitiesSection;
+				propertyLowerSection += propertyDetailsLink;
+				propertyLowerSection += propertyBookSection;
+				propertyLowerSection += '</div>';
+				propertyWrapper += propertyHeader;
+				propertyWrapper += propertyBadge;
+				propertyWrapper += propertyTitle;
+				propertyWrapper += propertyContact;
+				propertyWrapper += propertyDescription;
+				propertyWrapper += propertyLowerSection;
+				propertyWrapper += "</div>";
+
+				return propertyWrapper;
+			}
+
+			function defaultIfUnavailable(val, defaultVal){
+				if(typeof val == "undefined" || val == null || val == ""){
+					return defaultVal;
+				}
+				return val;
+			}
+
+			function convertCSVToListFilterBlanks(csvString){
+				var filteredArray = [];
+				var csvSplit = (defaultIfUnavailable(csvString,"")).split(',');
+				csvSplit.forEach(function(splitValue){
+					var compareValue = defaultIfUnavailable(splitValue,"");
+					if(compareValue != ""){
+						filteredArray.push(compareValue);
+					}
+				});
+				return filteredArray;
+			}
+		</script>
+</apex:page>

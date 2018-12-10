@@ -1,0 +1,15 @@
+.history-row {
+
+}
+
+.history-row:nth-child(odd) {
+	border-bottom: 1px solid #226666;
+}
+
+.history-row:nth-child(even) {
+	border-bottom: 1px solid #7A9E35;
+}
+
+.history-row:last-child {
+	border-bottom: 0;
+}
