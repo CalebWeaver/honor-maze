@@ -135,11 +135,11 @@ export default class Game extends React.Component {
 	}
 
 	submitItemToExamine() {
-		let userItemInput = this.state.userExamineInput.toLowerCase();
+		let userItemInput = this.state.userExamineInput.trim().toLowerCase();
 		this.setState({userExamineInput: ''});
 		if (this.state.inventory.get(userItemInput)) {
 			this.addHistory(this.state.inventory.get(userItemInput).desc());
-		} else {
+		} else if (userItemInput) {
 			this.addHistory('You don\'t have one of those.');
 		}
 		this.setState({showExamineInput: false});
@@ -165,17 +165,21 @@ export default class Game extends React.Component {
 	}
 
 	submitItemToUse() {
-		let userPrimaryItemInput = this.state.userPrimaryUseInput.toLowerCase();
-		let userSecondaryItemInput = this.state.userSecondaryUseInput.toLowerCase();
+		let userPrimaryItemInput = this.state.userPrimaryUseInput.trim().toLowerCase();
+		let userSecondaryItemInput = this.state.userSecondaryUseInput.trim().toLowerCase();
 		this.setState({userPrimaryUseInput: ''});
 		this.setState({userSecondaryUseInput: ''});
 		if (this.state.inventory.get(userPrimaryItemInput)) {
 			if (this.state.inventory.get(userSecondaryItemInput)) {
-				this.useItems(items[userPrimaryItemInput], items[userSecondaryItemInput]);
-			} else {
+				if (userPrimaryItemInput !== userSecondaryItemInput) {
+					this.useItems(items[userPrimaryItemInput], items[userSecondaryItemInput]);
+				} else {
+					this.addHistory('You only have one of those.');
+				}
+			} else if (userSecondaryItemInput) {
 				this.addHistory('You don\'t have '+userSecondaryItemInput);
 			}
-		} else {
+		} else if (userPrimaryItemInput) {
 			this.addHistory('You don\'t have '+userPrimaryItemInput);
 		}
 		this.setState({showUseInput: false});
@@ -233,7 +237,7 @@ export default class Game extends React.Component {
 	}
 
 	submitItemForInteract() {
-		let userItemInput = this.state.userItemInput.toLowerCase();
+		let userItemInput = this.state.userItemInput.trim().toLowerCase();
 		this.setState({userItemInput: ''});
 		if (this.state.inventory.get(userItemInput)) {
 			let itemEvent = this.getLocation().events[userItemInput];
@@ -242,7 +246,7 @@ export default class Game extends React.Component {
 			} else {
 				this.addHistory('That\'s no use here.');
 			}
-		} else {
+		} else if (userItemInput) {
 			this.addHistory('You don\'t have one of those.');
 		}
 		this.setState({showItemInput: false});
