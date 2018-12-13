@@ -96,63 +96,6 @@ class Room {
 
 const createRooms = function() {
 
-	GameMap.originalRooms.hall1 = new Room(
-		'You see a long stretch of hallway before you.',
-		{
-			n: 'hall2'
-		}
-	);
-	GameMap.originalRooms.hall2 = new Room(
-		'You see more hallway before you.',
-		{
-			s: 'hall1',
-			n: 'hall3'
-		},
-		{
-			p: {
-				title: 'key',
-				state: 'uncleared',
-				uncleared: 'You also see a key on the ground.',
-				desc: 'You pick up the key.',
-				item: 'hall key'
-			}
-		}
-	);
-	GameMap.originalRooms.hall3 = new Room(
-		'A short stretch of hall ends at a doorway.',
-		{
-			s: 'hall2',
-			n: {
-				name: 'treasure',
-				state: 'locked'
-			}
-		},
-		{
-			i: {
-				state: 'uncleared',
-				uncleared: 'You come to a locked door',
-				cleared: 'You see an open door, with a treasure room behind on the other side.',
-				evt: (game) => {
-					game.showItemInput();
-				}
-			},
-			'hall key': {
-				evt: function (game) {
-					this.events.i.state = 'cleared';
-					this.exits.n.state = 'unlocked';
-					game.removeItem('hall key');
-					game.addHistory('The lock clicks and the door swings open, revealing the treasure beyond.');
-				}
-			}
-		}
-	);
-	GameMap.originalRooms.treasure = new Room(
-		'You enter into a large room filled with treasure!',
-		{
-			s: 'hall3'
-		}
-	);
-
 	GameMap.originalRooms.exit = new Room(
 		'As you walk down the long hall you eventually see sunlight and the fresh air of freedom. You feel reinvigorated and alive as you never have before. By giving honor to others, you have freed yourself. Congratulations.'
 	);
@@ -169,18 +112,18 @@ const createRooms = function() {
 			w: 'redFoyer',
 		},
 		{
+			i: {
+				state: 'uncleared',
+				uncleared: 'It is white with a barred door. Through it is darkness and you soon see a large beast come attacking at the door, trying to chew through it, seeming desperate to break the bars, though they hold fast. On the door is a lock which has space for a three sided key.',
+				cleared: 'The door is now open and the creature sits docile, excited for his master to be free.',
+				evt: game => game.showItemInput()
+			},
 			p: {
 				title: 'note',
 				state: 'uncleared',
 				uncleared: 'You notice a note laying in the corner.',
 				desc: 'You pick up the note',
 				item: 'note'
-			},
-			i: {
-				state: 'uncleared',
-				uncleared: 'It is white with a barred door. Through it is darkness and you soon see a large beast come attacking at the door, trying to chew through it, seeming desperate to break the bars, though they hold fast. On the door is a lock which has space for a three sided key.',
-				cleared: 'The door is now open and the creature sits docile, excited for his master to be free.',
-				evt: game => game.showItemInput()
 			},
 			'tricolor key': {
 				evt: function (game) {
