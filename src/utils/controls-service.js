@@ -1,5 +1,8 @@
 export default class ControlsService {
 	static handleGameKeyDown(e, game) {
+		if (isEscape(e)) {
+			game.escape();
+		}
 		if (!game.isInputOpen()) {
 			if (isNorth(e)) {
 				game.moveNorth();
@@ -55,4 +58,8 @@ function isExamine(e) {
 
 function isUse(e) {
 	return e.code === 'KeyU';
+}
+
+function isEscape(e) {
+	return e.code === 'Escape';
 }
