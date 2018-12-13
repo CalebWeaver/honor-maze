@@ -1,6 +1,6 @@
 import React from 'react';
 import ControlsService from '../utils/controls-service';
-import {List, Map, fromJS} from 'immutable';
+import {List, Map} from 'immutable';
 import {items, Item} from '../items';
 import {GameMap} from '../GameMap';
 import './game-component.css';
@@ -43,7 +43,7 @@ export default class Game extends React.Component {
 
 	componentDidMount() {
 		document.addEventListener("keydown", this.handleKeydown.bind(this));
-		document.title = 'Honor Maze';
+		document.title = 'Maze of Honor';
 		let saveDataRaw = localStorage.getItem('state');
 		if (saveDataRaw) {
 			let savedState = JSON.parse(saveDataRaw);
@@ -109,12 +109,35 @@ export default class Game extends React.Component {
 			history.push(<RoomCard room={h} key={h.moveCount} />);
 		});
 
+		let newGameButtons;
+		if (this.state.newGameConfirm) {
+			newGameButtons = (
+				<div>
+					<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="outlined" color="primary"
+							style={{margin: '1rem',}}>
+						Confirm
+					</Button>
+					<Button onClick={() => this.cancelNewGame()} variant="outlined"
+							style={{margin: '1rem',}}>
+						Cancel
+					</Button>
+				</div>
+			);
+		} else {
+			newGameButtons = (
+				<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="outlined"
+						style={{margin: '1rem',}}>
+					New Game
+				</Button>
+			);
+		}
+
 		return (
 			<div className="container">
 				<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" />
 				<div className="history">
 					{this.state.showItemInput &&
-					<label style={{margin:'1rem, 1rem, 0, 0',}}>
+					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
 						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What item do you use?</Typography>
 						<TextField type="text"
 							   value={this.state.userItemInput}
@@ -125,7 +148,7 @@ export default class Game extends React.Component {
 					</label>
 					}
 					{this.state.showExamineInput &&
-					<label style={{margin:'1rem 0 0 1rem',}}>
+					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
 						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What do you examine?</Typography>
 						<TextField type="text"
 							   value={this.state.userExamineInput}
@@ -136,7 +159,7 @@ export default class Game extends React.Component {
 					</label>
 					}
 					{this.state.showUseInput &&
-					<label style={{margin:'.25rem',}}>
+					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
 						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What do you use?</Typography>
 						<TextField type="text"
 							   value={this.state.userPrimaryUseInput}
@@ -156,24 +179,7 @@ export default class Game extends React.Component {
 				</div>
 				<div style={{position: 'sticky', height: '100%', top: '0', padding: '1rem'}}>
 					<div style={{display:'flexbox', flexDirection:'column', justifyContent:'space-between'}}>
-						{!this.state.newGameConfirm ?
-							<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="contained"
-									style={{margin: '1rem',}}>
-								New Game
-							</Button>: null
-						}
-						{this.state.newGameConfirm ?
-							<div>
-								<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="contained" color="primary"
-										style={{margin: '1rem',}}>
-									Confirm
-								</Button>
-								<Button onClick={() => this.cancelNewGame()} variant="contained"
-									style={{margin: '1rem',}}>
-										Cancel
-								</Button>
-							</div>: null
-						}
+						{newGameButtons}
 						<Inventory items={this.state.inventory} />
 						<Instructions/>
 					</div>

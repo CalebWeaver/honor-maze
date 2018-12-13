@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2d04c338-6c8c-4fda-930d-50b087585aca" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/items.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/game-component/game-component.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/game-component/game-component.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rooms.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/GameMap.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/controls-service.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/controls-service.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -21,11 +18,20 @@
       <file leaf-file-name="game-component.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/game-component/game-component.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="75" column="40" lean-forward="true" selection-start-line="75" selection-start-column="40" selection-end-line="75" selection-end-column="40" />
+            <state relative-caret-position="487">
+              <caret line="162" column="119" selection-start-line="162" selection-start-column="119" selection-end-line="162" selection-end-column="119" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Typography.d.ts" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/node_modules/@material-ui/core/es/Typography/Typography.d.ts">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="707">
+              <caret line="52" column="14" selection-start-line="52" selection-start-column="14" selection-end-line="52" selection-end-column="14" />
             </state>
           </provider>
         </entry>
@@ -46,7 +52,7 @@
         <entry file="file://$PROJECT_DIR$/src/instructions-component.js">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="242">
-              <caret line="18" column="25" lean-forward="true" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
+              <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -57,16 +63,16 @@
       <file leaf-file-name="items.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/items.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="193">
-              <caret line="57" column="21" selection-start-line="57" selection-start-column="20" selection-end-line="57" selection-end-column="21" />
+            <state relative-caret-position="278">
+              <caret line="62" column="29" lean-forward="true" selection-start-line="62" selection-start-column="29" selection-end-line="62" selection-end-column="29" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="GameMap.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="GameMap.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/GameMap.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="167">
+            <state relative-caret-position="3468">
               <caret line="211" column="487" selection-start-line="211" selection-start-column="487" selection-end-line="211" selection-end-column="487" />
               <folding>
                 <element signature="e#0#28#0" expanded="true" />
@@ -87,8 +93,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>room</find>
-      <find>new game</find>
       <find>newgame</find>
       <find>origina</find>
       <find>GameMap.originalRooms</find>
@@ -117,6 +121,8 @@
       <find>fish don</find>
       <find>tricolo</find>
       <find>yellow</find>
+      <find>inventor</find>
+      <find>button</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -145,8 +151,8 @@
         <option value="$PROJECT_DIR$/src/rooms.js" />
         <option value="$PROJECT_DIR$/src/utils/controls-service.js" />
         <option value="$PROJECT_DIR$/src/items.js" />
-        <option value="$PROJECT_DIR$/src/game-component/game-component.js" />
         <option value="$PROJECT_DIR$/src/GameMap.js" />
+        <option value="$PROJECT_DIR$/src/game-component/game-component.js" />
       </list>
     </option>
   </component>
@@ -173,10 +179,10 @@
     </packageJsonPaths>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="285" />
-    <option name="y" value="-13" />
-    <option name="width" value="1022" />
-    <option name="height" value="735" />
+    <option name="x" value="-8" />
+    <option name="y" value="-8" />
+    <option name="width" value="1936" />
+    <option name="height" value="1056" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -327,7 +333,7 @@
       <workItem from="1543984345859" duration="2344000" />
       <workItem from="1544109122187" duration="104000" />
       <workItem from="1544125039184" duration="13400000" />
-      <workItem from="1544217750944" duration="78998000" />
+      <workItem from="1544217750944" duration="81629000" />
     </task>
     <task id="LOCAL-00001" summary="Finished blue section, added instructions and a note. Also refactored set state race conditions">
       <created>1544463569961</created>
@@ -364,14 +370,28 @@
       <option name="project" value="LOCAL" />
       <updated>1544541906330</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Added saving, fishing, material ui, escape key, and cleaned up story">
+      <created>1544689120372</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1544689120372</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Removing default items">
+      <created>1544689339900</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1544689339900</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="128941000" />
+    <option name="totallyTimeSpent" value="131572000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1382" height="744" extended-state="6" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info anchor="right" id="Key Promoter X" />
@@ -396,7 +416,7 @@
       <window_info anchor="bottom" id="Version Control" order="12" weight="0.32994923" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32994923" />
       <window_info id="npm" order="5" sideWeight="0.50165015" side_tool="true" weight="0.1732224" />
-      <window_info anchor="bottom" id="Terminal" order="9" weight="0.65989846" />
+      <window_info anchor="bottom" id="Terminal" order="9" weight="0.4111675" />
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49834985" weight="0.15204236" />
       <window_info anchor="bottom" id="SOQL Query" order="13" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -457,19 +477,11 @@
     <MESSAGE value="Update margin to use rem instead of em" />
     <MESSAGE value="Adding document title" />
     <MESSAGE value="Add more input validation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add more input validation" />
+    <MESSAGE value="Added saving, fishing, material ui, escape key, and cleaned up story" />
+    <MESSAGE value="Removing default items" />
+    <option name="LAST_COMMIT_MESSAGE" value="Removing default items" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/game-component/game-component.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" selection-start-line="10" selection-end-line="10" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/inventory-component/inventory-component.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
@@ -815,7 +827,7 @@
     <entry file="file://$PROJECT_DIR$/src/instructions-component.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="242">
-          <caret line="18" column="25" lean-forward="true" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
+          <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>
@@ -832,30 +844,37 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/items.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="278">
+          <caret line="62" column="29" lean-forward="true" selection-start-line="62" selection-start-column="29" selection-end-line="62" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/GameMap.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3468">
+          <caret line="211" column="487" selection-start-line="211" selection-start-column="487" selection-end-line="211" selection-end-column="487" />
+          <folding>
+            <element signature="e#0#28#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/game-component/game-component.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="75" column="40" lean-forward="true" selection-start-line="75" selection-start-column="40" selection-end-line="75" selection-end-column="40" />
+        <state relative-caret-position="487">
+          <caret line="162" column="119" selection-start-line="162" selection-start-column="119" selection-end-line="162" selection-end-column="119" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/items.js">
+    <entry file="file://$PROJECT_DIR$/node_modules/@material-ui/core/es/Typography/Typography.d.ts">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="193">
-          <caret line="57" column="21" selection-start-line="57" selection-start-column="20" selection-end-line="57" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/GameMap.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="167">
-          <caret line="211" column="487" selection-start-line="211" selection-start-column="487" selection-end-line="211" selection-end-column="487" />
-          <folding>
-            <element signature="e#0#28#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="707">
+          <caret line="52" column="14" selection-start-line="52" selection-start-column="14" selection-end-line="52" selection-end-column="14" />
         </state>
       </provider>
     </entry>
