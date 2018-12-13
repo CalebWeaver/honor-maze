@@ -3,9 +3,9 @@ import Typography from "@material-ui/core/es/Typography/Typography";
 import withStyles from "@material-ui/core/es/styles/withStyles";
 
 const styles = {
-	header: {
-		borderBottom: '1px solid black',
-	},
+	// header: {
+	// 	borderBottom: '1px solid black',
+	// },
 };
 
 function Instructions(props) {

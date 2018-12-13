@@ -4,9 +4,9 @@ import {Typography} from "@material-ui/core/es/index";
 import './inventory-component.css';
 
 const styles = {
-	inventoryHeader: {
-		borderBottom: '1px solid black',
-	},
+	// inventoryHeader: {
+	// 	borderBottom: '1px solid black',
+	// },
 };
 
 function Inventory(props) {

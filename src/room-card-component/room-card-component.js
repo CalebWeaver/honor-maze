@@ -6,14 +6,14 @@ import CardContent from "@material-ui/core/es/CardContent/CardContent";
 import { withStyles } from "@material-ui/styles";
 
 const styles = {
-	cardContainer: {
-		margin: '1rem',
-	},
-	historyContent: {
-		'&:last-child': {
-			paddingBottom: '16px',
-		},
-	}
+	// cardContainer: {
+	// 	margin: '1rem',
+	// },
+	// historyContent: {
+	// 	'&:last-child': {
+	// 		paddingBottom: '16px',
+	// 	},
+	// }
 };
 
 function RoomCard(props) {
