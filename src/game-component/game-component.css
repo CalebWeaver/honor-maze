@@ -5,3 +5,35 @@
 .history {
 
 }
+
+.container .new-game-button {
+	margin: 1rem;
+	align-self: flex-end;
+}
+
+.container .input-prompt {
+	display: flex;
+	align-items: baseline;
+	margin: 0 1rem 0 1rem;
+}
+
+.container .inline-block {
+	display: inline-block;
+}
+
+.container .margin_small {
+	margin: .25rem;
+}
+
+.container .sidebar-container {
+	position: sticky;
+	height: 100%;
+	top: 0;
+	padding: 1rem;
+}
+
+.container .sidebar-container .sidebar-aligner {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}

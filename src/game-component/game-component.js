@@ -114,11 +114,11 @@ export default class Game extends React.Component {
 			newGameButtons = (
 				<div>
 					<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="outlined" color="primary"
-							style={{margin: '1rem',}}>
+							className="new-game-button">
 						Confirm
 					</Button>
 					<Button onClick={() => this.cancelNewGame()} variant="outlined"
-							style={{margin: '1rem',}}>
+							className="new-game-button">
 						Cancel
 					</Button>
 				</div>
@@ -126,7 +126,7 @@ export default class Game extends React.Component {
 		} else {
 			newGameButtons = (
 				<Button onClick={() => this.newGame(this.state.newGameConfirm)} variant="outlined"
-						style={{margin: '1rem',}}>
+						className="new-game-button">
 					New Game
 				</Button>
 			);
@@ -137,48 +137,48 @@ export default class Game extends React.Component {
 				<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" />
 				<div className="history">
 					{this.state.showItemInput &&
-					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
-						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What item do you use?</Typography>
+					<label className="input-prompt">
+						<Typography variant="body1" component="p" className="inline-block">What item do you use?</Typography>
 						<TextField type="text"
 							   value={this.state.userItemInput}
 							   onChange={(e) => this.handleItemInputChange(e)}
 							   onKeyDown={(e) => this.handleItemInputEnter(e)}
 							   inputRef={this.itemInputRef}
-							   style={{margin:'.25rem',}} />
+							   className="margin_small" />
 					</label>
 					}
 					{this.state.showExamineInput &&
-					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
-						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What do you examine?</Typography>
+					<label className="input-prompt">
+						<Typography variant="body1" component="p" className="inline-block">What do you examine?</Typography>
 						<TextField type="text"
 							   value={this.state.userExamineInput}
 							   onChange={(e) => this.handleExamineInputChange(e)}
 							   onKeyDown={(e) => this.handleExamineInputEnter(e)}
 							   inputRef={this.examineInputRef}
-							   style={{margin:'.25rem',}} />
+							   className="margin_small" />
 					</label>
 					}
 					{this.state.showUseInput &&
-					<label style={{margin:'0 1rem 0 1rem',display:'flex',alignItems:'baseline'}}>
-						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>What do you use?</Typography>
+					<label className="input-prompt">
+						<Typography variant="body1" component="p" className="inline-block">What do you use?</Typography>
 						<TextField type="text"
 							   value={this.state.userPrimaryUseInput}
 							   onChange={(e) => this.handlePrimaryUseInputChange(e)}
 							   onKeyDown={(e) => this.handleUseInputEnter(e)}
 							   inputRef={this.useInputRef}
-							   style={{margin:'.25rem',}} />
-						<Typography variant="body1" component="p" style={{display: 'inline-block'}}>with</Typography>
+							   className="margin_small" />
+						<Typography variant="body1" component="p" className="inline-block">with</Typography>
 						<TextField type="text"
 							   value={this.state.userSecondaryUseInput}
 							   onChange={(e) => this.handleSecondaryUseInputChange(e)}
 							   onKeyDown={(e) => this.handleUseInputEnter(e)}
-							   style={{margin:'.25rem',}} />
+							   className="margin_small" />
 					</label>
 					}
 				{history}
 				</div>
-				<div style={{position: 'sticky', height: '100%', top: '0', padding: '1rem'}}>
-					<div style={{display:'flexbox', flexDirection:'column', justifyContent:'space-between'}}>
+				<div className="sidebar-container">
+					<div className="sidebar-aligner">
 						{newGameButtons}
 						<Inventory items={this.state.inventory} />
 						<Instructions/>

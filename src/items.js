@@ -37,7 +37,7 @@ items.carrots = new Item(
 );
 items.crate = new Item(
 		'Crate',
-		'A wooden box with 5 sides.',
+		'A wooden box with 5 sides. Large enough to comfortably hold a rabbit.',
 		'animal trap',
 );
 items.canteen = new Item(
