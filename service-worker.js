@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/honor-maze/precache-manifest.7b02ff359fa8787db0af91e470bc780c.js"
+  "/honor-maze/precache-manifest.43a6a8604fb51d83f5a1e512abc7ea13.js"
 );
 
 workbox.clientsClaim();
