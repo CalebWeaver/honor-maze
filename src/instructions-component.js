@@ -13,8 +13,8 @@ function Instructions(props) {
 	let {classes} = props;
 
 	return (
-		<div>
-			<Typography variant="h3" component="h2" className={classes.header}>
+		<div className="instructions">
+			<Typography variant="h3" component="h2" className="header">
 				Instructions:
 			</Typography>
 			<Typography variant="body1" component="p">

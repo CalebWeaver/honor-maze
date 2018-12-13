@@ -13,3 +13,11 @@
 .history-row:last-child {
 	border-bottom: 0;
 }
+
+.card-container {
+	margin: 1rem;
+}
+
+.history-content:last-child {
+	padding-bottom: 16px;
+}

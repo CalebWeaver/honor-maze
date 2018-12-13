@@ -1,6 +1,7 @@
 import React from "react";
 import { withStyles } from "@material-ui/styles";
 import {Typography} from "@material-ui/core/es/index";
+import './inventory-component.css';
 
 const styles = {
 	inventoryHeader: {
@@ -23,7 +24,7 @@ function Inventory(props) {
 
 	return (
 		<div>
-			<Typography variant='h3' component="h2" className={classes.inventoryHeader}>Inventory</Typography>
+			<Typography variant='h3' component="h2" className="inventory-header">Inventory</Typography>
 			{items}
 		</div>
 	);

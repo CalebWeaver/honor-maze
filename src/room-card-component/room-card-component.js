@@ -25,8 +25,8 @@ function RoomCard(props) {
 	});
 
 	return (
-		<Card className={classes.cardContainer}>
-			<CardContent className={classes.historyContent}>
+		<Card className="card-container">
+			<CardContent className="history-content">
 				{roomHistory}
 			</CardContent>
 		</Card>
